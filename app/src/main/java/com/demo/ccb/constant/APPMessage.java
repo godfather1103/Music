@@ -10,6 +10,8 @@ public final class APPMessage {
         public static final int pause = 1;
         public static final int stop = 2;
         public static final int replay = 3;
+        public static final int playover = 4;
+        public static final int playtime = 5;
     }
 
     public static final class APPPath{

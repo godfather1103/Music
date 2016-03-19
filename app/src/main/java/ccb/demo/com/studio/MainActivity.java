@@ -1,7 +1,10 @@
 package ccb.demo.com.studio;
 
+import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -49,6 +52,9 @@ public class MainActivity extends AppCompatActivity {
 
     ListView MusiclistView;
 
+    //音乐还剩的播放时间
+    long MusicTime;
+
     //当前播放的歌曲信息
     TextView CurrentSongTitle;
     TextView CurrentSongTime;
@@ -56,6 +62,7 @@ public class MainActivity extends AppCompatActivity {
     ImageView CurrentSongIco;
     //是否随机
     Button PlayState;
+
 
 
     //上方工具栏的按钮
@@ -68,14 +75,13 @@ public class MainActivity extends AppCompatActivity {
     public void setCurrentSong(int position) {
         if (MusicList != null) {
             MusicInfo music = MusicList.get(position);
-            long songtime = music.getMusicTime();
-            String time = songtime / 60000 + ":" + (songtime % 60000) / 1000;
+            MusicTime = music.getMusicTime();
+            String time = MusicTime / 60000 + ":" + (MusicTime % 60000) / 1000;
             CurrentSongTitle.setText(music.getMusicTitle());
             CurrentSongTime.setText(time);
             CurrentSongPosition.setText(String.valueOf(position));
 
-            boolean f = new DBUtil().insertCurrentSong(position,PlayState.getText().toString());
-
+            new DBUtil().insertCurrentSong(position, PlayState.getText().toString());
 
             //设置内嵌图标
             Uri uri = Uri.parse(music.getIco());
@@ -132,6 +138,10 @@ public class MainActivity extends AppCompatActivity {
         PlaySong.setOnClickListener(new PlayButtonOnClick());
         PreviousSong.setOnClickListener(new PlayButtonOnClick());
         NextSong.setOnClickListener(new PlayButtonOnClick());
+
+        IntentFilter filter=new IntentFilter();
+        filter.addAction("com.demo.ccb.service.PlayService");
+        registerReceiver(new BroadcastReceive(),filter);
     }
 
     @Override
@@ -140,11 +150,14 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        //建立后台PlayService与前台MainActivity间的通信
+        intent.setClass(MainActivity.this, PlayService.class);
+
         checkFileAndFolder();
         init();
         setLisnter();
 
-        intent.setClass(MainActivity.this, PlayService.class);
+
         if (MusicList != null) {
             setListAdpter(MusicList);
             Object[] Current = new DBUtil().getCurrentSong();
@@ -155,7 +168,6 @@ public class MainActivity extends AppCompatActivity {
             }
 
             PlaySong.setBackgroundResource(R.drawable.play);
-
             isFirst = true;
         }
     }
@@ -356,6 +368,27 @@ public class MainActivity extends AppCompatActivity {
                 return false;
             else
                 return true;
+        }
+    }
+
+    //处理PlayService发送来的广播
+    private class BroadcastReceive extends BroadcastReceiver {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            int msg = intent.getIntExtra("OverMsg", 0);
+            if (msg==APPMessage.PlayMsg.playover){
+                NextSong.performClick();
+            }else if(msg==APPMessage.PlayMsg.playtime){
+                MusicInfo music;
+                int position = Integer.valueOf(CurrentSongPosition.getText().toString());
+                if (MusicList != null){
+                    music = MusicList.get(position);
+                    MusicTime = MusicTime - 1000;
+                    String time = MusicTime / 60000 + ":" + (MusicTime % 60000) / 1000;
+                    CurrentSongTime.setText(time);
+                }
+            }
         }
     }
 
