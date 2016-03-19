@@ -1,9 +1,7 @@
 package ccb.demo.com.studio;
 
 import android.content.ContentResolver;
-import android.content.ContentUris;
 import android.content.Intent;
-import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -28,11 +26,10 @@ import com.demo.ccb.constant.APPMessage;
 import com.demo.ccb.service.PlayService;
 import com.demo.ccb.util.DBUtil;
 import com.demo.ccb.util.MusicAppUtil;
-import com.demo.ccb.vo.MiusicInfo;
+import com.demo.ccb.vo.MusicInfo;
 
 import java.io.File;
 import java.io.FileDescriptor;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -48,7 +45,7 @@ public class MainActivity extends AppCompatActivity {
 
     ContentResolver cr;
 
-    List<MiusicInfo> MusicList;
+    List<MusicInfo> MusicList;
 
     ListView MusiclistView;
 
@@ -70,7 +67,7 @@ public class MainActivity extends AppCompatActivity {
     //设置当前歌曲状态
     public void setCurrentSong(int position) {
         if (MusicList != null) {
-            MiusicInfo music = MusicList.get(position);
+            MusicInfo music = MusicList.get(position);
             long songtime = music.getMusicTime();
             String time = songtime / 60000 + ":" + (songtime % 60000) / 1000;
             CurrentSongTitle.setText(music.getMusicTitle());
@@ -126,7 +123,7 @@ public class MainActivity extends AppCompatActivity {
         PreviousSong = (Button) findViewById(R.id.PreviousSong);
         NextSong = (Button) findViewById(R.id.NextSong);
         cr = getContentResolver();
-        MusicList = MusicAppUtil.getMusicListFromSD(cr);
+        MusicList = MusicAppUtil.getMusicListFromDB(cr);
     }
 
     //注册各个组件的监听器
@@ -201,9 +198,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     //设置歌曲列表
-    public void setListAdpter(List<MiusicInfo> MusicList) {
+    public void setListAdpter(List<MusicInfo> MusicList) {
         List<HashMap<String, String>> Mp3List = new ArrayList<HashMap<String, String>>();
-        for (MiusicInfo music : MusicList) {
+        for (MusicInfo music : MusicList) {
             long songtime = music.getMusicTime();
             String time = songtime / 60000 + ":" + (songtime % 60000) / 1000;
             HashMap<String, String> map = new HashMap<String, String>();
@@ -283,7 +280,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
             if (MusicList != null) {
-                MiusicInfo music = MusicList.get(position);
+                MusicInfo music = MusicList.get(position);
                 intent.putExtra("url", music.getMusicPath());
                 intent.putExtra("MSG", APPMessage.PlayMsg.play);
                 startService(intent);
@@ -299,7 +296,7 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onClick(View view) {
-            MiusicInfo music;
+            MusicInfo music;
             int id = view.getId();
             TextView CurrentSongPosition = (TextView) findViewById(R.id.CurrentSongPosition);
             int position = Integer.valueOf(CurrentSongPosition.getText().toString());

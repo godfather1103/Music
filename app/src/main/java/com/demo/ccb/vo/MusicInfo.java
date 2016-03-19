@@ -4,7 +4,7 @@ package com.demo.ccb.vo;
  * 音乐的实体类，存放每个音乐文件的信息
  * 
  * */
-public class MiusicInfo {
+public class MusicInfo {
 
 	/*
      * 音乐的
@@ -24,12 +24,12 @@ public class MiusicInfo {
 	private String MusicPath;
 	private String ico;
 
-	public MiusicInfo() {
+	public MusicInfo() {
 		super();
 	}
 	
-	public MiusicInfo(long musicID, String musicTitle, String musicArtist, long musicTime, long musicSize,
-			String musicPath) {
+	public MusicInfo(long musicID, String musicTitle, String musicArtist, long musicTime, long musicSize,
+					 String musicPath) {
 		super();
 		MusicID = musicID;
 		MusicTitle = musicTitle;

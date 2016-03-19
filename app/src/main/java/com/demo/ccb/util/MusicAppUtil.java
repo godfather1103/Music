@@ -1,17 +1,14 @@
 package com.demo.ccb.util;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Objects;
 
 
 import android.content.ContentResolver;
 import android.database.Cursor;
 import android.provider.MediaStore;
 
-import com.demo.ccb.vo.MiusicInfo;
+import com.demo.ccb.vo.MusicInfo;
 
 public class MusicAppUtil {
 	
@@ -22,16 +19,26 @@ public class MusicAppUtil {
 	*/
 
 
+	public static List<MusicInfo> getMusicListFromDB(ContentResolver cr){
+		List<MusicInfo> MusicList = null;
+		MusicList = new DBUtil().getMusicList();
+		if (MusicList==null){
+			MusicList = getMusicListFromSD(cr);
+			new DBUtil().setMusicList(MusicList);
+		}
+		return MusicList;
+	}
 
-	public static List<MiusicInfo> getMusicListFromSD(ContentResolver cr) {
-		List<MiusicInfo> MusicList = new ArrayList<MiusicInfo>();
+
+	public static List<MusicInfo> getMusicListFromSD(ContentResolver cr) {
+		List<MusicInfo> MusicList = new ArrayList<MusicInfo>();
 		Cursor cursor = cr.query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, 
 			    null, null, null, MediaStore.Audio.Media.DEFAULT_SORT_ORDER);
-		MiusicInfo music = null;
+		MusicInfo music = null;
 		while(cursor.moveToNext()){
 			int isMusic = cursor.getInt(cursor.getColumnIndex(MediaStore.Audio.Media.IS_MUSIC));//是否为音乐 
 			if(isMusic != 0){
-				music = new MiusicInfo();
+				music = new MusicInfo();
 				long al = cursor.getLong(cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID));
 				music.setMusicID(cursor.getLong(cursor.getColumnIndex(MediaStore.Audio.Media._ID)));
 				music.setMusicTitle(cursor.getString((cursor.getColumnIndex(MediaStore.Audio.Media.TITLE))));
