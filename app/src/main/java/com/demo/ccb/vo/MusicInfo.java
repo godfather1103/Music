@@ -1,10 +1,13 @@
 package com.demo.ccb.vo;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 /*
  * 音乐的实体类，存放每个音乐文件的信息
  * 
  * */
-public class MusicInfo {
+public class MusicInfo  implements Parcelable {
 
 	/*
      * 音乐的
@@ -38,6 +41,28 @@ public class MusicInfo {
 		MusicSize = musicSize;
 		MusicPath = musicPath;
 	}
+
+	protected MusicInfo(Parcel in) {
+		MusicID = in.readLong();
+		MusicTitle = in.readString();
+		MusicArtist = in.readString();
+		MusicTime = in.readLong();
+		MusicSize = in.readLong();
+		MusicPath = in.readString();
+		ico = in.readString();
+	}
+
+	public static final Creator<MusicInfo> CREATOR = new Creator<MusicInfo>() {
+		@Override
+		public MusicInfo createFromParcel(Parcel in) {
+			return new MusicInfo(in);
+		}
+
+		@Override
+		public MusicInfo[] newArray(int size) {
+			return new MusicInfo[size];
+		}
+	};
 
 	public long getMusicID() {
 		return MusicID;
@@ -80,5 +105,21 @@ public class MusicInfo {
 	}
 	public void setIco(String ico) {
 		this.ico = ico;
+	}
+
+	@Override
+	public int describeContents() {
+		return 0;
+	}
+
+	@Override
+	public void writeToParcel(Parcel dest, int flags) {
+		dest.writeLong(MusicID);
+		dest.writeString(MusicTitle);
+		dest.writeString(MusicArtist);
+		dest.writeLong(MusicTime);
+		dest.writeLong(MusicSize);
+		dest.writeString(MusicPath);
+		dest.writeString(ico);
 	}
 }

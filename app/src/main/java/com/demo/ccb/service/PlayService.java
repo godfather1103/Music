@@ -4,13 +4,19 @@ import android.app.Service;
 import android.content.Intent;
 import android.media.MediaPlayer;
 import android.media.MediaPlayer.OnPreparedListener;
+import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Message;
 import android.support.annotation.Nullable;
 import android.media.MediaPlayer.OnCompletionListener;
 
 import com.demo.ccb.constant.APPMessage;
+import com.demo.ccb.util.MusicAppUtil;
+import com.demo.ccb.vo.MusicInfo;
 
-import java.io.IOException;
+import java.util.List;
+
 
 /**
  * Created by godfa on 2016/3/18.
@@ -21,7 +27,7 @@ public class PlayService extends Service {
     private String path;                        //音乐文件路径
     private boolean isPause;                    //暂停状态
     Intent intent = new Intent();
-
+    List<MusicInfo> mp3list = null;
 
     @Override
     public void onCreate() {
@@ -52,11 +58,20 @@ public class PlayService extends Service {
         return null;
     }
 
+
+    @Override
+    public void onDestroy() {
+        if (mediaPlayer != null) {
+            mediaPlayer.stop();
+            mediaPlayer.release();
+        }
+    }
+
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
 
         path = intent.getStringExtra("url");
-        int msg = intent.getIntExtra("MSG", 0);
+        int msg = intent.getIntExtra("MSG", -1);
         if (msg == APPMessage.PlayMsg.play) {
             play(0);
         } else if (msg == APPMessage.PlayMsg.pause) {
@@ -65,6 +80,9 @@ public class PlayService extends Service {
             stop();
         } else if (msg == APPMessage.PlayMsg.replay) {
             replay();
+        }else if(msg==APPMessage.PlayMsg.beginSearch){
+            String key = intent.getStringExtra("key");
+            searchNetSong(key);
         }
 
         return super.onStartCommand(intent, flags, startId);
@@ -121,16 +139,6 @@ public class PlayService extends Service {
         }
     }
 
-
-    @Override
-    public void onDestroy() {
-        if (mediaPlayer != null) {
-            mediaPlayer.stop();
-            mediaPlayer.release();
-        }
-    }
-
-
     /**
      * 实现一个OnPrepareLister接口,当音乐准备好的时候开始播放
      */
@@ -159,10 +167,54 @@ public class PlayService extends Service {
 
         @Override
         public void onCompletion(MediaPlayer mp) {
-
             intent.putExtra("OverMsg", APPMessage.PlayMsg.playover);
             intent.setAction("com.demo.ccb.service.PlayService");
             sendBroadcast(intent);
+        }
+    }
+
+
+    private void searchNetSong(String key){
+/*
+        List<MusicInfo> mp3list = MusicAppUtil.getMusicListFromNet(key);
+        if (mp3list!=null&&mp3list.size()>0){
+            intent.putExtra("OverMsg", APPMessage.PlayMsg.searchSuccess);
+        }else {
+            intent.putExtra("OverMsg",APPMessage.PlayMsg.searchFail);
+        }
+        intent.setAction("com.demo.ccb.service.PlayService");
+        sendBroadcast(intent);*/
+        NetWork net = new NetWork();
+        net.key = key;
+        new Thread(net).start();
+    }
+
+    Handler handler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            Bundle data = msg.getData();
+            int flag = data.getInt("result");
+            intent.putExtra("OverMsg",flag);
+            intent.setAction("com.demo.ccb.service.PlayService");
+            sendBroadcast(intent);
+        }
+    };
+
+    private class NetWork implements Runnable{
+        public String key;
+        @Override
+        public void run() {
+            mp3list = MusicAppUtil.getMusicListFromNet(key);
+            Message msg = new Message();
+            Bundle data = new Bundle();
+            if (mp3list!=null&&mp3list.size()>0){
+                data.putInt("result",APPMessage.PlayMsg.searchSuccess);
+            }else {
+                data.putInt("result",APPMessage.PlayMsg.searchFail);
+            }
+            msg.setData(data);
+            handler.sendMessage(msg);
         }
     }
 

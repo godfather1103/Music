@@ -12,6 +12,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.ParcelFileDescriptor;
+import android.os.Parcelable;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
@@ -46,6 +47,8 @@ public class MainActivity extends AppCompatActivity {
 
     final Intent intent = new Intent();
 
+    //public static MainActivity instance = null;
+
     ContentResolver cr;
 
     List<MusicInfo> MusicList;
@@ -55,6 +58,9 @@ public class MainActivity extends AppCompatActivity {
     //音乐还剩的播放时间
     long MusicTime;
 
+    //当前播放的歌曲
+    MusicInfo CurrentSong = null;
+
     //当前播放的歌曲信息
     TextView CurrentSongTitle;
     TextView CurrentSongTime;
@@ -63,86 +69,24 @@ public class MainActivity extends AppCompatActivity {
     //是否随机
     Button PlayState;
 
-
-
     //上方工具栏的按钮
     Button PlaySong;
     Button PreviousSong;
     Button NextSong;
 
+    String sDir = null;
+/*
+    static Bitmap back = null;
+    static BitmapDrawable bd = null;
 
-    //设置当前歌曲状态
-    public void setCurrentSong(int position) {
-        if (MusicList != null) {
-            MusicInfo music = MusicList.get(position);
-            MusicTime = music.getMusicTime();
-            String time = MusicTime / 60000 + ":" + (MusicTime % 60000) / 1000;
-            CurrentSongTitle.setText(music.getMusicTitle());
-            CurrentSongTime.setText(time);
-            CurrentSongPosition.setText(String.valueOf(position));
-
-            new DBUtil().insertCurrentSong(position, PlayState.getText().toString());
-
-            //设置内嵌图标
-            Uri uri = Uri.parse(music.getIco());
-            ParcelFileDescriptor pfd = null;
-            Bitmap bm = null;
-            FileDescriptor fd = null;
-            try {
-                pfd = cr.openFileDescriptor(uri, "r");
-                if (pfd != null) {
-                    fd = pfd.getFileDescriptor();
-                    bm = BitmapFactory.decodeFileDescriptor(fd);
-                }
-                if (bm != null) {
-                    CurrentSongIco.setImageBitmap(bm);
-                } else {
-                    throw new Exception();
-                }
-            } catch (Exception e) {
-                CurrentSongIco.setImageResource(R.mipmap.ico);
-            } finally {
-                if (pfd != null) {
-                    try {
-                        pfd.close();
-                        pfd = null;
-                    } catch (IOException e) {
-                        pfd = null;
-                    }
-                }
-            }
-            PlaySong.setBackgroundResource(R.drawable.pause);
-            isPause = false;
-            isFirst = false;
-        }
+    {
+        checkFileAndFolder();
+        String path = sDir + "skin/back.jpg";
+        back = BitmapFactory.decodeFile(path);
+     bd = new BitmapDrawable(this.getResources(), back);
     }
+*/
 
-    //初始化各个组件
-    protected void init() {
-        CurrentSongTitle = (TextView) findViewById(R.id.CurrentSongTitle);
-        CurrentSongTime = (TextView) findViewById(R.id.CurrentSongTime);
-        CurrentSongPosition = (TextView) findViewById(R.id.CurrentSongPosition);
-        CurrentSongIco = (ImageView) findViewById(R.id.CurrentSongIco);
-        PlayState = (Button) findViewById(R.id.PlayState);
-
-        PlaySong = (Button) findViewById(R.id.PlaySong);
-        PreviousSong = (Button) findViewById(R.id.PreviousSong);
-        NextSong = (Button) findViewById(R.id.NextSong);
-        cr = getContentResolver();
-        MusicList = MusicAppUtil.getMusicListFromDB(cr);
-    }
-
-    //注册各个组件的监听器
-    protected void setLisnter() {
-        PlayState.setOnClickListener(new PlayButtonOnClick());
-        PlaySong.setOnClickListener(new PlayButtonOnClick());
-        PreviousSong.setOnClickListener(new PlayButtonOnClick());
-        NextSong.setOnClickListener(new PlayButtonOnClick());
-
-        IntentFilter filter=new IntentFilter();
-        filter.addAction("com.demo.ccb.service.PlayService");
-        registerReceiver(new BroadcastReceive(),filter);
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -156,20 +100,7 @@ public class MainActivity extends AppCompatActivity {
         checkFileAndFolder();
         init();
         setLisnter();
-
-
-        if (MusicList != null) {
-            setListAdpter(MusicList);
-            Object[] Current = new DBUtil().getCurrentSong();
-            setCurrentSong((int) Current[0]);
-            if ("1".equals(Current[1].toString())){
-                PlayState.setText("1");
-                PlayState.setBackgroundResource(R.drawable.random);
-            }
-
-            PlaySong.setBackgroundResource(R.drawable.play);
-            isFirst = true;
-        }
+        back2Main();
     }
 
     @Override
@@ -190,23 +121,31 @@ public class MainActivity extends AppCompatActivity {
         if (id == R.id.action_settings) {
             return true;
         } else if (id == R.id.action_exit) {
-            onDestroy();
+            stopService(intent);
+            setCurrentSong(MusicList, Integer.valueOf(CurrentSongPosition.getText().toString()));
+            finish();
+            System.exit(0);
 
         } else if (id == R.id.action_find) {
             MusicList = null;
             MusicList = MusicAppUtil.getMusicListFromSD(cr);
             if (MusicList != null)
                 setListAdpter(MusicList);
+        } else if (id == R.id.action_openactivity) {
+            Intent ac1_ac2 = new Intent();
+            ac1_ac2.setClass(MainActivity.this, NetworkActivity.class);
+            CurrentSong.setMusicTime(MusicTime);
+            int position = Integer.valueOf(CurrentSongPosition.getText().toString());
+            Bundle ac1_ac2_bundle = new Bundle();
+            ac1_ac2_bundle.putInt("position", position);
+            ac1_ac2_bundle.putBoolean("isPlaying", !isPause);
+            ac1_ac2_bundle.putParcelable("CurrentSong", CurrentSong);
+            ac1_ac2_bundle.putParcelableArrayList("MusicList", (ArrayList<? extends Parcelable>) MusicList);
+            ac1_ac2.putExtras(ac1_ac2_bundle);
+            startActivity(ac1_ac2);
+            this.finish();
         }
         return super.onOptionsItemSelected(item);
-    }
-
-    @Override
-    protected void onDestroy() {
-        stopService(intent);
-        setCurrentSong(Integer.valueOf(CurrentSongPosition.getText().toString()));
-        super.onDestroy();
-        System.exit(0);
     }
 
     //设置歌曲列表
@@ -236,7 +175,7 @@ public class MainActivity extends AppCompatActivity {
     //检查文件夹和数据库创建情况
     public void checkFileAndFolder() {
         String status = Environment.getExternalStorageState();
-        String sDir = null;
+
         if (status.equals(Environment.MEDIA_MOUNTED)) {
             sDir = APPMessage.APPPath.ExistSD;
         } else {
@@ -247,56 +186,86 @@ public class MainActivity extends AppCompatActivity {
             destDir.mkdirs();
         }
 
+        destDir = new File(sDir + "skin/");
+        if (!destDir.exists()) {
+            destDir.mkdirs();
+        }
+
+        destDir = new File(sDir + "lyric/");
+        if (!destDir.exists()) {
+            destDir.mkdirs();
+        }
+
+        destDir = new File(sDir + "song/");
+        if (!destDir.exists()) {
+            destDir.mkdirs();
+        }
+
+        destDir = new File(sDir + "skin/back.jpg");
+        if (!destDir.exists()) {
+            Bitmap back = BitmapFactory.decodeResource(this.getResources(), R.drawable.back);
+            try {
+                MusicAppUtil.saveBitmapToFile(back, sDir + "skin/back.jpg");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+
         destDir = new File(APPMessage.APPPath.NoExistSD + "/databases/");
         if (!destDir.exists()) {
             destDir.mkdirs();
         }
 
-        //初始化数据库
-        SQLiteDatabase db = SQLiteDatabase.openOrCreateDatabase(
-                APPMessage.APPPath.NoExistSD + "/databases/Music.db",
-                null);
-        StringBuilder CurrentSong = new StringBuilder();
-        CurrentSong.append("CREATE TABLE IF NOT EXISTS [CurrentSong] (");
-        CurrentSong.append("  [position] INTEGER NOT NULL DEFAULT 0, ");
-        CurrentSong.append("  [PlayState] VARCHAR NOT NULL DEFAULT 0); ");
+        destDir = new File(APPMessage.APPPath.NoExistSD + "/databases/Music.db");
+        if (!destDir.exists()) {
+            //初始化数据库
+            SQLiteDatabase db = SQLiteDatabase.openOrCreateDatabase(
+                    APPMessage.APPPath.NoExistSD + "/databases/Music.db",
+                    null);
+            StringBuilder CurrentSong = new StringBuilder();
+            CurrentSong.append("CREATE TABLE IF NOT EXISTS [CurrentSong] (");
+            CurrentSong.append("  [position] INTEGER NOT NULL DEFAULT 0, ");
+            CurrentSong.append("  [PlayState] VARCHAR NOT NULL DEFAULT 0); ");
 
-        StringBuilder LocalMusicList = new StringBuilder();
-        LocalMusicList.append("CREATE TABLE IF NOT EXISTS [LocalMusicList] (");
-        LocalMusicList.append("  [MusicID] INTEGER NOT NULL, ");
-        LocalMusicList.append("  [MusicTitle] VARCHAR NOT NULL, ");
-        LocalMusicList.append("  [MusicArtist] VARCHAR, ");
-        LocalMusicList.append("  [MusicTime] INTEGER NOT NULL, ");
-        LocalMusicList.append("  [MusicSize] INTEGER NOT NULL, ");
-        LocalMusicList.append("  [MusicPath] VARCHAR NOT NULL, ");
-        LocalMusicList.append("  [Ico] VARCHAR); ");
+            StringBuilder LocalMusicList = new StringBuilder();
+            LocalMusicList.append("CREATE TABLE IF NOT EXISTS [LocalMusicList] (");
+            LocalMusicList.append("  [MusicID] INTEGER NOT NULL, ");
+            LocalMusicList.append("  [MusicTitle] VARCHAR NOT NULL, ");
+            LocalMusicList.append("  [MusicArtist] VARCHAR, ");
+            LocalMusicList.append("  [MusicTime] INTEGER NOT NULL, ");
+            LocalMusicList.append("  [MusicSize] INTEGER NOT NULL, ");
+            LocalMusicList.append("  [MusicPath] VARCHAR NOT NULL, ");
+            LocalMusicList.append("  [Ico] VARCHAR); ");
 
-        StringBuilder NetMusicList = new StringBuilder();
-        NetMusicList.append("CREATE TABLE IF NOT EXISTS [NetMusicList] (");
-        NetMusicList.append("  [MusicID] INTEGER NOT NULL, ");
-        NetMusicList.append("  [MusicTitle] VARCHAR NOT NULL, ");
-        NetMusicList.append("  [MusicArtist] VARCHAR, ");
-        NetMusicList.append("  [MusicTime] INTEGER NOT NULL, ");
-        NetMusicList.append("  [MusicSize] INTEGER NOT NULL, ");
-        NetMusicList.append("  [MusicPath] VARCHAR NOT NULL, ");
-        NetMusicList.append("  [Ico] VARCHAR); ");
+            StringBuilder NetMusicList = new StringBuilder();
+            NetMusicList.append("CREATE TABLE IF NOT EXISTS [NetMusicList] (");
+            NetMusicList.append("  [MusicID] INTEGER NOT NULL, ");
+            NetMusicList.append("  [MusicTitle] VARCHAR NOT NULL, ");
+            NetMusicList.append("  [MusicArtist] VARCHAR, ");
+            NetMusicList.append("  [MusicTime] INTEGER NOT NULL, ");
+            NetMusicList.append("  [MusicSize] INTEGER NOT NULL, ");
+            NetMusicList.append("  [MusicPath] VARCHAR NOT NULL, ");
+            NetMusicList.append("  [Ico] VARCHAR); ");
 
-        db.execSQL(CurrentSong.toString());
-        db.execSQL(LocalMusicList.toString());
-        db.execSQL(NetMusicList.toString());
-        db.close();
+            db.execSQL(CurrentSong.toString());
+            db.execSQL(LocalMusicList.toString());
+            db.execSQL(NetMusicList.toString());
+            db.close();
+        }
     }
 
     //点击播放列表条目时的监听器
     private class MusicListItemClickListener implements OnItemClickListener {
         @Override
         public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
+            MusicList = MusicAppUtil.getMusicListFromDB(getContentResolver());
             if (MusicList != null) {
                 MusicInfo music = MusicList.get(position);
                 intent.putExtra("url", music.getMusicPath());
                 intent.putExtra("MSG", APPMessage.PlayMsg.play);
                 startService(intent);
-                setCurrentSong(position);
+                setCurrentSong(MusicList, position);
             }
         }
 
@@ -350,7 +319,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                     if (MusicList != null) {
                         intent.putExtra("MSG", APPMessage.PlayMsg.play);
-                        setCurrentSong(position);
+                        setCurrentSong(MusicList, position);
                     }
                 }
 
@@ -377,13 +346,13 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onReceive(Context context, Intent intent) {
             int msg = intent.getIntExtra("OverMsg", 0);
-            if (msg==APPMessage.PlayMsg.playover){
+            if (msg == APPMessage.PlayMsg.playover) {
                 NextSong.performClick();
-            }else if(msg==APPMessage.PlayMsg.playtime){
-                MusicInfo music;
-                int position = Integer.valueOf(CurrentSongPosition.getText().toString());
-                if (MusicList != null){
-                    music = MusicList.get(position);
+            } else if (msg == APPMessage.PlayMsg.playtime) {
+                //MusicInfo music;
+                //int position = Integer.valueOf(CurrentSongPosition.getText().toString());
+                if (MusicList != null) {
+                    // music = MusicList.get(position);
                     MusicTime = MusicTime - 1000;
                     String time = MusicTime / 60000 + ":" + (MusicTime % 60000) / 1000;
                     CurrentSongTime.setText(time);
@@ -392,5 +361,155 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    //设置当前歌曲状态
+    public void setCurrentSong(List<MusicInfo> MusicList, int position) {
+        MusicInfo music = MusicList.get(position);
+        CurrentSong = music;
+        MusicTime = music.getMusicTime();
+        String time = MusicTime / 60000 + ":" + (MusicTime % 60000) / 1000;
+        CurrentSongTitle.setText(music.getMusicTitle());
+        CurrentSongTime.setText(time);
+        CurrentSongPosition.setText(String.valueOf(position));
+
+        new DBUtil().insertCurrentSong(position, PlayState.getText().toString());
+
+        //设置内嵌图标
+        Uri uri = Uri.parse(music.getIco());
+        ParcelFileDescriptor pfd = null;
+        Bitmap bm = null;
+        FileDescriptor fd = null;
+        try {
+            pfd = cr.openFileDescriptor(uri, "r");
+            if (pfd != null) {
+                fd = pfd.getFileDescriptor();
+                bm = BitmapFactory.decodeFileDescriptor(fd);
+            }
+            if (bm != null) {
+                CurrentSongIco.setImageBitmap(bm);
+            } else {
+                throw new Exception();
+            }
+        } catch (Exception e) {
+            CurrentSongIco.setImageResource(R.mipmap.ico);
+        } finally {
+            if (pfd != null) {
+                try {
+                    pfd.close();
+                    pfd = null;
+                } catch (IOException e) {
+                    pfd = null;
+                }
+            }
+        }
+        PlaySong.setBackgroundResource(R.drawable.pause);
+        isPause = false;
+        isFirst = false;
+    }
+
+    //初始化各个组件
+    protected void init() {
+        CurrentSongTitle = (TextView) findViewById(R.id.CurrentSongTitle);
+        CurrentSongTime = (TextView) findViewById(R.id.CurrentSongTime);
+        CurrentSongPosition = (TextView) findViewById(R.id.CurrentSongPosition);
+        CurrentSongIco = (ImageView) findViewById(R.id.CurrentSongIco);
+        PlayState = (Button) findViewById(R.id.PlayState);
+        PlaySong = (Button) findViewById(R.id.PlaySong);
+        PreviousSong = (Button) findViewById(R.id.PreviousSong);
+        NextSong = (Button) findViewById(R.id.NextSong);
+        cr = getContentResolver();
+        //instance = this;
+    }
+
+
+    public void back2Main() {
+        int position;
+        Object[] Current = new DBUtil().getCurrentSong();
+        Bundle bundle = getIntent().getExtras();
+        try {
+            position = bundle.getInt("position");
+            isPause = !bundle.getBoolean("isPlaying");
+            CurrentSong = bundle.getParcelable("CurrentSong");
+            MusicList = bundle.getParcelableArrayList("MusicList");
+            setCurrentSong(MusicList, position);
+            MusicTime = CurrentSong.getMusicTime();
+            String time = MusicTime / 60000 + ":" + (MusicTime % 60000) / 1000;
+            CurrentSongTime.setText(time);
+
+            if (Current != null) {
+                if ("1".equals(Current[1].toString())) {
+                    PlayState.setText("1");
+                    PlayState.setBackgroundResource(R.drawable.random);
+                }
+            }
+        } catch (Exception e) {
+
+            MusicList = MusicAppUtil.getMusicListFromDB(cr);
+            if (Current != null) {
+                setCurrentSong(MusicList, (int) Current[0]);
+                if ("1".equals(Current[1].toString())) {
+                    PlayState.setText("1");
+                    PlayState.setBackgroundResource(R.drawable.random);
+                }
+            } else {
+                setCurrentSong(MusicList, 0);
+            }
+            PlaySong.setBackgroundResource(R.drawable.play);
+            isFirst = true;
+        }
+
+        if (MusicAppUtil.getMusicListFromDB(cr) != null) {
+            setListAdpter(MusicAppUtil.getMusicListFromDB(cr));
+        }
+
+    }
+
+
+    //注册各个组件的监听器
+    protected void setLisnter() {
+        PlayState.setOnClickListener(new PlayButtonOnClick());
+        PlaySong.setOnClickListener(new PlayButtonOnClick());
+        PreviousSong.setOnClickListener(new PlayButtonOnClick());
+        NextSong.setOnClickListener(new PlayButtonOnClick());
+
+        IntentFilter filter = new IntentFilter();
+        filter.addAction("com.demo.ccb.service.PlayService");
+        registerReceiver(new BroadcastReceive(), filter);
+    }
+
+/*
+    //回收内存，释放资源
+    private void freeMemory() {
+        releaseImageView(findViewById(R.id.MainMain));
+        releaseImageView(findViewById(R.id.PreviousSong));
+        releaseImageView(findViewById(R.id.PlaySong));
+        releaseImageView(findViewById(R.id.NextSong));
+        releaseImageView(findViewById(R.id.CurrentSongIco));
+        releaseImageView(findViewById(R.id.PlayState));
+        if (back != null && !back.isRecycled()) {
+            back.recycle();
+        }
+        back = null;
+        bd = null;
+    }*/
+
+/*    private void releaseImageView(View view) {
+        Drawable d = view.getBackground();
+        Bitmap bitmap = null;
+        if (d != null) {
+            try {
+                bitmap = ((BitmapDrawable) d).getBitmap();
+                if (bitmap != null && !bitmap.isRecycled()) {
+                    bitmap.recycle();
+                }
+            } catch (ClassCastException e) {
+                d.setCallback(null);
+            }
+        }
+        if (d!=null)
+            d.setCallback(null);
+        bitmap = null;
+        d = null;
+
+    }*/
 
 }
