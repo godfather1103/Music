@@ -125,7 +125,7 @@ public class NetworkActivity extends AppCompatActivity {
             return true;
         } else if (id == R.id.action_exit) {
             this.finish();
-            //MainActivity.instance.finish();
+            stopService(intent);
             System.exit(0);
         } else if (id == R.id.action_openactivity) {
             back2Main();
