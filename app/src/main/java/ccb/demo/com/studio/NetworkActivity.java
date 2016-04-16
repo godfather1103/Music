@@ -49,7 +49,7 @@ public class NetworkActivity extends AppCompatActivity {
     final Intent intent = new Intent();
     ContentResolver cr;
     //是否第一次播放
-    private boolean isFirst = true;
+    private boolean isFirst;
 
     EditText input_key;
 
@@ -87,7 +87,7 @@ public class NetworkActivity extends AppCompatActivity {
         try {
             position = bundle.getInt("position");
             isPlaying = bundle.getBoolean("isPlaying");
-
+            isFirst = bundle.getBoolean("isFirst");
             CurrentSong = bundle.getParcelable("CurrentSong");
             MusicList = bundle.getParcelableArrayList("MusicList");
             setCurrentSong(MusicList, position);
@@ -98,7 +98,6 @@ public class NetworkActivity extends AppCompatActivity {
 
             if (!isPlaying) {
                 PlaySong.setBackgroundResource(R.drawable.play);
-                isFirst = true;
             } else {
                 PlaySong.setBackgroundResource(R.drawable.pause);
             }
@@ -150,7 +149,8 @@ public class NetworkActivity extends AppCompatActivity {
         int position = Integer.valueOf(CurrentSongPosition.getText().toString());
         Bundle ac2_ac1_bundle = new Bundle();
         ac2_ac1_bundle.putInt("position", position);
-        ac2_ac1_bundle.putBoolean("isPlaying", isPlaying);
+        ac2_ac1_bundle.putBoolean("isPause", !isPlaying);
+        ac2_ac1_bundle.putBoolean("isFirst",isFirst);
         ac2_ac1_bundle.putParcelable("CurrentSong", CurrentSong);
         ac2_ac1_bundle.putParcelableArrayList("MusicList", (ArrayList<? extends Parcelable>) MusicList);
         ac2_ac1.putExtras(ac2_ac1_bundle);
@@ -206,7 +206,10 @@ public class NetworkActivity extends AppCompatActivity {
         CurrentSongTime = (TextView) findViewById(R.id.CurrentSongTime);
         CurrentSongPosition = (TextView) findViewById(R.id.CurrentSongPosition);
         CurrentSongIco = (ImageView) findViewById(R.id.CurrentSongIco);
+
         PlaySong = (Button) findViewById(R.id.PlayControl);
+        PlaySong.setOnClickListener(new PlayButtonOnClick());
+
         intent.setClass(this, PlayService.class);
         cr = getContentResolver();
         input_key = (EditText) findViewById(R.id.input_key);
@@ -293,6 +296,7 @@ public class NetworkActivity extends AppCompatActivity {
                 intent.putExtra("MSG", APPMessage.PlayMsg.play);
                 startService(intent);
                 setCurrentSong(MusicList, position);
+                isPlaying=true;
             }
         }
     }
@@ -305,7 +309,7 @@ public class NetworkActivity extends AppCompatActivity {
             int id = view.getId();
             TextView CurrentSongPosition = (TextView) findViewById(R.id.CurrentSongPosition);
             int position = Integer.valueOf(CurrentSongPosition.getText().toString());
-                if (id == R.id.PlaySong) {
+                if (id == R.id.PlayControl) {
                     if (isFirst) {
                         intent.putExtra("MSG", APPMessage.PlayMsg.play);
                         PlaySong.setBackgroundResource(R.drawable.pause);
@@ -322,23 +326,6 @@ public class NetworkActivity extends AppCompatActivity {
                         }
                     }
                 }
-/*                else {
-                    if (id == R.id.PreviousSong) {
-                        position = (position - 1 + MusicList.size()) % MusicList.size();
-                    } else if (id == R.id.NextSong) {
-                        if (!isRandom()) {
-                            position = (position + 1) % MusicList.size();
-                        } else {
-                            int random = 1 + ((int) (Math.random() * MusicList.size())) % (MusicList.size() - 1);
-                            position = (position + random) % MusicList.size();
-                        }
-                    }
-                    if (MusicList != null) {
-                        intent.putExtra("MSG", APPMessage.PlayMsg.play);
-                        setCurrentSong(MusicList, position);
-                    }
-                }*/
-
                 music = MusicList.get(position);
                 intent.putExtra("url", music.getMusicPath());
                 startService(intent);

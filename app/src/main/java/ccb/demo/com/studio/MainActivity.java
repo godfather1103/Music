@@ -140,6 +140,7 @@ public class MainActivity extends AppCompatActivity {
             ac1_ac2_bundle.putInt("position", position);
             ac1_ac2_bundle.putBoolean("isPlaying", !isPause);
             ac1_ac2_bundle.putParcelable("CurrentSong", CurrentSong);
+            ac1_ac2_bundle.putBoolean("isFirst",isFirst);
             ac1_ac2_bundle.putParcelableArrayList("MusicList", (ArrayList<? extends Parcelable>) MusicList);
             ac1_ac2.putExtras(ac1_ac2_bundle);
             startActivity(ac1_ac2);
@@ -266,6 +267,8 @@ public class MainActivity extends AppCompatActivity {
                 intent.putExtra("MSG", APPMessage.PlayMsg.play);
                 startService(intent);
                 setCurrentSong(MusicList, position);
+                PlaySong.setBackgroundResource(R.drawable.pause);
+                isPause = false;
             }
         }
 
@@ -401,8 +404,6 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         }
-        PlaySong.setBackgroundResource(R.drawable.pause);
-        isPause = false;
         isFirst = false;
     }
 
@@ -427,14 +428,18 @@ public class MainActivity extends AppCompatActivity {
         Bundle bundle = getIntent().getExtras();
         try {
             position = bundle.getInt("position");
-            isPause = !bundle.getBoolean("isPlaying");
+            isPause = bundle.getBoolean("isPause");
             CurrentSong = bundle.getParcelable("CurrentSong");
             MusicList = bundle.getParcelableArrayList("MusicList");
             setCurrentSong(MusicList, position);
             MusicTime = CurrentSong.getMusicTime();
             String time = MusicTime / 60000 + ":" + (MusicTime % 60000) / 1000;
             CurrentSongTime.setText(time);
-
+            if(isPause){
+                PlaySong.setBackgroundResource(R.drawable.play);
+            }else{
+                PlaySong.setBackgroundResource(R.drawable.pause);
+            }
             if (Current != null) {
                 if ("1".equals(Current[1].toString())) {
                     PlayState.setText("1");
@@ -475,41 +480,5 @@ public class MainActivity extends AppCompatActivity {
         filter.addAction("com.demo.ccb.service.PlayService");
         registerReceiver(new BroadcastReceive(), filter);
     }
-
-/*
-    //回收内存，释放资源
-    private void freeMemory() {
-        releaseImageView(findViewById(R.id.MainMain));
-        releaseImageView(findViewById(R.id.PreviousSong));
-        releaseImageView(findViewById(R.id.PlaySong));
-        releaseImageView(findViewById(R.id.NextSong));
-        releaseImageView(findViewById(R.id.CurrentSongIco));
-        releaseImageView(findViewById(R.id.PlayState));
-        if (back != null && !back.isRecycled()) {
-            back.recycle();
-        }
-        back = null;
-        bd = null;
-    }*/
-
-/*    private void releaseImageView(View view) {
-        Drawable d = view.getBackground();
-        Bitmap bitmap = null;
-        if (d != null) {
-            try {
-                bitmap = ((BitmapDrawable) d).getBitmap();
-                if (bitmap != null && !bitmap.isRecycled()) {
-                    bitmap.recycle();
-                }
-            } catch (ClassCastException e) {
-                d.setCallback(null);
-            }
-        }
-        if (d!=null)
-            d.setCallback(null);
-        bitmap = null;
-        d = null;
-
-    }*/
 
 }
