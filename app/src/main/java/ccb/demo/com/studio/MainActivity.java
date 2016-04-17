@@ -15,6 +15,7 @@ import android.os.ParcelFileDescriptor;
 import android.os.Parcelable;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -25,6 +26,7 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.demo.ccb.constant.APPMessage;
 import com.demo.ccb.service.PlayService;
@@ -36,6 +38,7 @@ import java.io.File;
 import java.io.FileDescriptor;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
@@ -75,18 +78,6 @@ public class MainActivity extends AppCompatActivity {
     Button NextSong;
 
     String sDir = null;
-/*
-    static Bitmap back = null;
-    static BitmapDrawable bd = null;
-
-    {
-        checkFileAndFolder();
-        String path = sDir + "skin/back.jpg";
-        back = BitmapFactory.decodeFile(path);
-     bd = new BitmapDrawable(this.getResources(), back);
-    }
-*/
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -147,6 +138,25 @@ public class MainActivity extends AppCompatActivity {
             this.finish();
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    public static Date StartTime;
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0) {
+            Date CurTime = new Date();
+            if (CurTime.getTime() - StartTime.getTime() > 2000) {
+                Toast.makeText(this.getApplicationContext(), "再按一次返回键就退出程序！", Toast.LENGTH_SHORT).show();
+                StartTime = CurTime;
+            } else {
+                stopService(intent);
+                setCurrentSong(MusicList, Integer.valueOf(CurrentSongPosition.getText().toString()));
+                finish();
+                System.exit(0);
+            }
+        }
+        return true;
     }
 
     //设置歌曲列表
@@ -418,6 +428,7 @@ public class MainActivity extends AppCompatActivity {
         PreviousSong = (Button) findViewById(R.id.PreviousSong);
         NextSong = (Button) findViewById(R.id.NextSong);
         cr = getContentResolver();
+        StartTime = new Date();
         //instance = this;
     }
 
