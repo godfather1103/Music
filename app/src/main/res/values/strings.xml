@@ -4,5 +4,5 @@
     <string name="action_exit">退出</string>
     <string name="action_find">扫描音乐</string>
     <string name="action_open">切换</string>
-
+    <string name="zero">0</string>
 </resources>

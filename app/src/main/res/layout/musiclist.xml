@@ -16,7 +16,7 @@
         android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
         android:layout_alignParentTop="true"
-        android:text="Title"
+
         android:textColor="#FFFFFF" />
 
     <TextView
@@ -25,7 +25,7 @@
         android:layout_height="wrap_content"
         android:layout_alignLeft="@+id/SongTitle"
         android:layout_below="@+id/SongTitle"
-        android:text="Singer"
+
         android:textColor="#FFFFFF" />
 
     <TextView
@@ -34,7 +34,7 @@
         android:layout_height="wrap_content"
         android:layout_above="@+id/Singer"
         android:layout_alignParentRight="true"
-        android:text="Time"
+
         android:textColor="#FFFFFF" />
 
 </RelativeLayout>

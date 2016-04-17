@@ -175,15 +175,6 @@ public class PlayService extends Service {
 
 
     private void searchNetSong(String key){
-/*
-        List<MusicInfo> mp3list = MusicAppUtil.getMusicListFromNet(key);
-        if (mp3list!=null&&mp3list.size()>0){
-            intent.putExtra("OverMsg", APPMessage.PlayMsg.searchSuccess);
-        }else {
-            intent.putExtra("OverMsg",APPMessage.PlayMsg.searchFail);
-        }
-        intent.setAction("com.demo.ccb.service.PlayService");
-        sendBroadcast(intent);*/
         NetWork net = new NetWork();
         net.key = key;
         new Thread(net).start();

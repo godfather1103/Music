@@ -15,6 +15,7 @@ import android.os.ParcelFileDescriptor;
 import android.os.Parcelable;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -293,6 +294,8 @@ public class MainActivity extends AppCompatActivity {
             MusicInfo music;
             int id = view.getId();
             TextView CurrentSongPosition = (TextView) findViewById(R.id.CurrentSongPosition);
+            if (CurrentSongPosition == null)
+                return;
             int position = Integer.valueOf(CurrentSongPosition.getText().toString());
             if (id == R.id.PlayState) {
                 if (isRandom()) {
@@ -346,10 +349,7 @@ public class MainActivity extends AppCompatActivity {
         //是否随机播放
         public boolean isRandom() {
             int state = Integer.valueOf(PlayState.getText().toString());
-            if (state == 0)
-                return false;
-            else
-                return true;
+            return state != 0;
         }
     }
 
@@ -390,7 +390,7 @@ public class MainActivity extends AppCompatActivity {
         Uri uri = Uri.parse(music.getIco());
         ParcelFileDescriptor pfd = null;
         Bitmap bm = null;
-        FileDescriptor fd = null;
+        FileDescriptor fd;
         try {
             pfd = cr.openFileDescriptor(uri, "r");
             if (pfd != null) {
@@ -408,9 +408,8 @@ public class MainActivity extends AppCompatActivity {
             if (pfd != null) {
                 try {
                     pfd.close();
-                    pfd = null;
                 } catch (IOException e) {
-                    pfd = null;
+                    Log.d("aaa", e.getMessage());
                 }
             }
         }

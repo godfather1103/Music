@@ -173,7 +173,7 @@ public class NetworkActivity extends AppCompatActivity {
         Uri uri = Uri.parse(music.getIco());
         ParcelFileDescriptor pfd = null;
         Bitmap bm = null;
-        FileDescriptor fd = null;
+        FileDescriptor fd;
         try {
             pfd = cr.openFileDescriptor(uri, "r");
             if (pfd != null) {
@@ -191,9 +191,9 @@ public class NetworkActivity extends AppCompatActivity {
             if (pfd != null) {
                 try {
                     pfd.close();
-                    pfd = null;
+                    //pfd = null;
                 } catch (IOException e) {
-                    pfd = null;
+                    //pfd = null;
                 }
             }
         }
@@ -308,6 +308,8 @@ public class NetworkActivity extends AppCompatActivity {
             MusicInfo music;
             int id = view.getId();
             TextView CurrentSongPosition = (TextView) findViewById(R.id.CurrentSongPosition);
+            if (CurrentSongPosition == null)
+                return;
             int position = Integer.valueOf(CurrentSongPosition.getText().toString());
                 if (id == R.id.PlayControl) {
                     if (isFirst) {
@@ -336,10 +338,7 @@ public class NetworkActivity extends AppCompatActivity {
         //是否随机播放
         public boolean isRandom() {
 
-            if (isRandom == 0)
-                return false;
-            else
-                return true;
+            return isRandom != 0;
         }
     }
 }

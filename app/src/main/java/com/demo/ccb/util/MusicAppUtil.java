@@ -12,7 +12,6 @@ import android.content.ContentResolver;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.provider.MediaStore;
-import android.util.Log;
 
 import com.demo.ccb.vo.MusicInfo;
 
@@ -27,11 +26,11 @@ public class MusicAppUtil {
     /**
      * 用于从数据库中查询歌曲的信息，保存在List当中
      *
-     * @return
+     * @return List
      */
 
     public static List<MusicInfo> getMusicListFromDB(ContentResolver cr) {
-        List<MusicInfo> MusicList = null;
+        List<MusicInfo> MusicList;
         MusicList = new DBUtil().getMusicList();
         if (MusicList == null) {
             MusicList = getMusicListFromSD(cr);
@@ -43,19 +42,19 @@ public class MusicAppUtil {
     /**
      * 用于从SD中查询歌曲的信息，保存在List当中
      *
-     * @return
+     * @return List
      */
 
     public static List<MusicInfo> getMusicListFromSD(ContentResolver cr) {
         List<MusicInfo> MusicList = new ArrayList<MusicInfo>();
         Cursor cursor = cr.query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
                 null, null, null, MediaStore.Audio.Media.DEFAULT_SORT_ORDER);
-        MusicInfo music = null;
-        while (cursor.moveToNext()) {
+        MusicInfo music;
+        while (cursor != null && cursor.moveToNext()) {
             int isMusic = cursor.getInt(cursor.getColumnIndex(MediaStore.Audio.Media.IS_MUSIC));//是否为音乐
             if (isMusic != 0) {
                 music = new MusicInfo();
-                long al = cursor.getLong(cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID));
+                //long al = cursor.getLong(cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID));
                 music.setMusicID(cursor.getLong(cursor.getColumnIndex(MediaStore.Audio.Media._ID)));
                 music.setMusicTitle(cursor.getString((cursor.getColumnIndex(MediaStore.Audio.Media.TITLE))));
                 music.setMusicArtist(cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ARTIST)));
@@ -66,20 +65,22 @@ public class MusicAppUtil {
                 MusicList.add(music);
             }
         }
+        if (cursor != null)
+            cursor.close();
         return MusicList;
     }
 
     /**
      * 用于从网络中查询歌曲的信息，保存在List当中
      *
-     * @return
+     * @return List
      */
     public static List<MusicInfo> getMusicListFromNet(String key) {
         List<MusicInfo> MusicList = new ArrayList<MusicInfo>();
-        JSONArray songs = null;
-        JSONObject result = null;
-        JSONObject msg = null;
-        JSONObject song = null;
+        JSONArray songs;
+        JSONObject result;
+        JSONObject msg;
+        JSONObject song;
 
         try {
             msg = api.search(key, 1, 0, "true", 20);

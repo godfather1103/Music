@@ -1,5 +1,7 @@
 package com.demo.ccb.constant;
 
+import android.os.Environment;
+
 /**
  * Created by godfa on 2016/3/18.
  */
@@ -18,7 +20,7 @@ public final class APPMessage {
     }
 
     public static final class APPPath{
-        public static final String ExistSD ="/sdcard/MusicApp/";
+        public static final String ExistSD = Environment.getExternalStorageDirectory().getPath() + "/MusicApp/";
         public static final String NoExistSD ="/data/data/ccb.demo.com.studio/";
     }
 

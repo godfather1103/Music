@@ -76,7 +76,7 @@
             android:id="@+id/CurrentSongPosition"
             android:layout_width="60dp"
             android:layout_height="60dp"
-            android:text="0"
+
             android:visibility="gone" />
 
         <ImageView
@@ -124,7 +124,7 @@
             android:layout_height="match_parent"
             android:layout_x="265dp"
             android:layout_y="0dp"
-            android:text="0"
+            android:text="@string/zero"
             android:background="@drawable/loop" />
     </AbsoluteLayout>
 

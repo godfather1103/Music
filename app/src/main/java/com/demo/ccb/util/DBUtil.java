@@ -58,9 +58,9 @@ public class DBUtil {
 
     //从数据库中获取本地歌曲列表
     public List<MusicInfo> getMusicList() {
-        List<MusicInfo> MusicList = null;
+        List<MusicInfo> MusicList = new ArrayList<MusicInfo>();
         if (sqlite != null) {
-            MusicList = new ArrayList<MusicInfo>();
+
             Cursor cr = sqlite.rawQuery("select * from LocalMusicList;", new String[]{});
             while (cr.moveToNext()) {
                 MusicInfo music = new MusicInfo();
@@ -74,6 +74,7 @@ public class DBUtil {
                 MusicList.add(music);
             }
             close();
+            cr.close();
         }
         if (MusicList.size() < 1) {
             MusicList = null;
@@ -116,7 +117,7 @@ public class DBUtil {
 
     //判断本地歌曲数据库中是否存在相应的歌曲信息
     public boolean existMusic(long MusicID) {
-        boolean flag = false;
+        boolean flag;
         Cursor cr = sqlite.rawQuery("select * from LocalMusicList where MusicID = ?;", new String[]{String.valueOf(MusicID)});
         flag = cr.moveToNext();
         cr.close();
@@ -146,9 +147,11 @@ public class DBUtil {
                 music.setIco(cr.getString(cr.getColumnIndex("Ico")));
                 MusicList.add(music);
             }
+            cr.close();
             close();
         }
-        if (MusicList.size() < 1) {
+
+        if (MusicList != null && MusicList.size() < 1) {
             MusicList = null;
         }
         return MusicList;
@@ -192,7 +195,7 @@ public class DBUtil {
 
     //判断网络歌曲数据库中是否存在相应的歌曲信息
     public boolean existMusicInNetTable(long MusicID) {
-        boolean flag = false;
+        boolean flag;
         Cursor cr = sqlite.rawQuery("select * from NetMusicList where MusicID = ?;", new String[]{String.valueOf(MusicID)});
         flag = cr.moveToNext();
         cr.close();
