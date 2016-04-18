@@ -60,10 +60,10 @@ public class MainActivity extends AppCompatActivity {
     ListView MusiclistView;
 
     //音乐还剩的播放时间
-    long MusicTime;
+    long MusicTime = 0;
 
     //当前播放的歌曲
-    MusicInfo CurrentSong = null;
+    MusicInfo CurrentSong = new MusicInfo();
 
     //当前播放的歌曲信息
     TextView CurrentSongTitle;
@@ -466,6 +466,7 @@ public class MainActivity extends AppCompatActivity {
                     PlayState.setBackgroundResource(R.drawable.random);
                 }
             } else {
+                if (MusicList != null && MusicList.size() > 0)
                 setCurrentSong(MusicList, 0);
             }
             PlaySong.setBackgroundResource(R.drawable.play);

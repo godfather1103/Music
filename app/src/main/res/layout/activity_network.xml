@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:id="@+id/NetworkMain"
-    android:background="@drawable/back"
+    android:background="@drawable/back1"
     tools:context="ccb.demo.com.studio.NetworkActivity">
 
     <android.support.design.widget.AppBarLayout
