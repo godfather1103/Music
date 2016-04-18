@@ -1,4 +1,4 @@
-package com.demo.ccb.service;
+package com.demo.hwq.service;
 
 import android.app.Service;
 import android.content.Intent;
@@ -11,9 +11,9 @@ import android.os.Message;
 import android.support.annotation.Nullable;
 import android.media.MediaPlayer.OnCompletionListener;
 
-import com.demo.ccb.constant.APPMessage;
-import com.demo.ccb.util.MusicAppUtil;
-import com.demo.ccb.vo.MusicInfo;
+import com.demo.hwq.constant.APPMessage;
+import com.demo.hwq.util.MusicAppUtil;
+import com.demo.hwq.vo.MusicInfo;
 
 import java.util.List;
 

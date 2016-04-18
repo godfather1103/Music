@@ -1,4 +1,4 @@
-package com.demo.ccb.vo;
+package com.demo.hwq.vo;
 
 import android.os.Parcel;
 import android.os.Parcelable;

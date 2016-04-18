@@ -1,10 +1,10 @@
-package com.demo.ccb.util;
+package com.demo.hwq.util;
 
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
-import com.demo.ccb.constant.APPMessage;
-import com.demo.ccb.vo.MusicInfo;
+import com.demo.hwq.constant.APPMessage;
+import com.demo.hwq.vo.MusicInfo;
 
 import java.util.ArrayList;
 import java.util.List;

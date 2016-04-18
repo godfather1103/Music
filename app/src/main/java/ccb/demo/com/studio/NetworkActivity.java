@@ -27,11 +27,11 @@ import android.widget.SimpleAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.demo.ccb.constant.APPMessage;
-import com.demo.ccb.service.PlayService;
-import com.demo.ccb.util.DBUtil;
-import com.demo.ccb.util.MusicAppUtil;
-import com.demo.ccb.vo.MusicInfo;
+import com.demo.hwq.constant.APPMessage;
+import com.demo.hwq.service.PlayService;
+import com.demo.hwq.util.DBUtil;
+import com.demo.hwq.util.MusicAppUtil;
+import com.demo.hwq.vo.MusicInfo;
 
 import java.io.FileDescriptor;
 import java.io.IOException;
@@ -126,10 +126,11 @@ public class NetworkActivity extends AppCompatActivity {
             this.finish();
             stopService(intent);
             System.exit(0);
-        } else if (id == R.id.action_openactivity) {
-            back2Main();
-
         }
+//        else if (id == R.id.action_openactivity) {
+//            back2Main();
+//
+//        }
 
         return super.onOptionsItemSelected(item);
     }

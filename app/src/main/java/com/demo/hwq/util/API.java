@@ -1,4 +1,4 @@
-package com.demo.ccb.util;
+package com.demo.hwq.util;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
@@ -13,7 +13,7 @@ import org.apache.http.util.EntityUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.net.HttpURLConnection;
+//import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,7 +27,7 @@ import java.util.List;
  */
 public class API {
 
-    private HttpURLConnection connection = null;
+    //private HttpURLConnection connection = null;
     private ArrayList<NameValuePair> headerList = new ArrayList<NameValuePair>();
     //   private ArrayList<NameValuePair> cookies = new ArrayList<NameValuePair>();
 //    int default_timeout = 10;

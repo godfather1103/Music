@@ -1,4 +1,4 @@
-package com.demo.ccb.util;
+package com.demo.hwq.util;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -13,7 +13,7 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.provider.MediaStore;
 
-import com.demo.ccb.vo.MusicInfo;
+import com.demo.hwq.vo.MusicInfo;
 
 import org.json.JSONArray;
 import org.json.JSONException;
