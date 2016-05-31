@@ -1,8 +1,11 @@
 package ccb.demo.com.studio;
 
+import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
@@ -13,6 +16,7 @@ import android.os.ParcelFileDescriptor;
 import android.os.Parcelable;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -33,6 +37,7 @@ import com.demo.hwq.util.DBUtil;
 import com.demo.hwq.util.MusicAppUtil;
 import com.demo.hwq.vo.MusicInfo;
 
+import java.io.File;
 import java.io.FileDescriptor;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -74,6 +79,10 @@ public class NetworkActivity extends AppCompatActivity {
 
     //是否是随机播放
     int isRandom = 0;
+
+    //实现下载等待窗口
+    private ProgressDialog loading = null;
+    //AlertDialog.Builder loading = new AlertDialog.Builder(NetworkActivity.this);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -151,7 +160,7 @@ public class NetworkActivity extends AppCompatActivity {
         Bundle ac2_ac1_bundle = new Bundle();
         ac2_ac1_bundle.putInt("position", position);
         ac2_ac1_bundle.putBoolean("isPause", !isPlaying);
-        ac2_ac1_bundle.putBoolean("isFirst",isFirst);
+        ac2_ac1_bundle.putBoolean("isFirst", isFirst);
         ac2_ac1_bundle.putParcelable("CurrentSong", CurrentSong);
         ac2_ac1_bundle.putParcelableArrayList("MusicList", (ArrayList<? extends Parcelable>) MusicList);
         ac2_ac1.putExtras(ac2_ac1_bundle);
@@ -214,7 +223,7 @@ public class NetworkActivity extends AppCompatActivity {
         intent.setClass(this, PlayService.class);
         cr = getContentResolver();
         input_key = (EditText) findViewById(R.id.input_key);
-
+        loading = null;
         input_key.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
@@ -223,8 +232,12 @@ public class NetworkActivity extends AppCompatActivity {
                     if (key.length() <= 0) {
                         Toast.makeText(getApplicationContext(), "输入不能为空", Toast.LENGTH_SHORT).show();
                     } else {
+                        if (loading!=null){
+                            loading.dismiss();
+                        }
                         intent.putExtra("key", key);
                         intent.putExtra("MSG", APPMessage.PlayMsg.beginSearch);
+                        loading = ProgressDialog.show(NetworkActivity.this,"搜索","正在搜索...");
                         startService(intent);
                     }
                     return true;
@@ -239,6 +252,7 @@ public class NetworkActivity extends AppCompatActivity {
         IntentFilter filter = new IntentFilter();
         filter.addAction("com.demo.ccb.service.PlayService");
         registerReceiver(new BroadcastReceive(), filter);
+
     }
 
     //设置歌曲列表
@@ -253,6 +267,7 @@ public class NetworkActivity extends AppCompatActivity {
             map.put("duration", time);
             map.put("size", String.valueOf(music.getMusicSize()));
             map.put("url", music.getMusicPath());
+            map.put("ID",String.valueOf(music.getMusicID()));
             Mp3List.add(map);
         }
 
@@ -262,6 +277,7 @@ public class NetworkActivity extends AppCompatActivity {
                 new int[]{R.id.SongTitle, R.id.Singer, R.id.SongTime});
         MusiclistView = (ListView) findViewById(R.id.MusicList);
         MusiclistView.setOnItemClickListener(new MusicListItemClickListener());
+        MusiclistView.setOnItemLongClickListener(new MusicListItemLongClickListenter());
         MusiclistView.setAdapter(sa);
     }
 
@@ -277,12 +293,28 @@ public class NetworkActivity extends AppCompatActivity {
                 String time = MusicTime / 60000 + ":" + (MusicTime % 60000) / 1000;
                 CurrentSongTime.setText(time);
             }else if (msg==APPMessage.PlayMsg.searchSuccess){
+                loading.cancel();
                 stopService(intent);
                 MusicList = new DBUtil().getMusicListInNetTable();
                 setListAdpter(MusicList);
             }else if(msg==APPMessage.PlayMsg.searchFail){
-                Toast.makeText(getApplicationContext(),"为查找到相应歌曲信息请重新输入搜索关键词",Toast.LENGTH_LONG).show();
+                loading.dismiss();
+                Toast.makeText(getApplicationContext(),
+                        "没有查找到相应歌曲信息请重新输入搜索关键词",
+                        Toast.LENGTH_LONG).show();
+            }else if (msg==APPMessage.NetPlayMsg.downloadSuccess){
+                String title = intent.getStringExtra("title");
+                Toast.makeText(getApplicationContext(),
+                        "歌曲下载成功，请重新扫描本地音乐",
+                        Toast.LENGTH_SHORT).show();
 
+                        Intent scanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+                        scanIntent.setData(Uri.fromFile(new File(MusicAppUtil.checkFileAndFolder()+"song/"+title)));
+                        NetworkActivity.this.sendBroadcast(scanIntent);
+            }else if (msg==APPMessage.NetPlayMsg.downloadFail){
+                Toast.makeText(getApplicationContext(),
+                        "歌曲下载失败！",
+                        Toast.LENGTH_LONG).show();
             }
         }
     }
@@ -298,9 +330,51 @@ public class NetworkActivity extends AppCompatActivity {
                 startService(intent);
                 setCurrentSong(MusicList, position);
                 isPlaying=true;
+                isFirst = false;
+                PlaySong.setBackgroundResource(R.drawable.pause);
             }
         }
     }
+
+    //长按播放条目时的监听器
+    public int p;//记录下载的歌曲的位置
+    private class MusicListItemLongClickListenter implements AdapterView.OnItemLongClickListener {
+
+        @Override
+        public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+            p = position;
+            AlertDialog.Builder builder = new AlertDialog.Builder(NetworkActivity.this);
+            builder.setMessage("是否下载此音乐？");
+            builder.setTitle("下载提示");
+            builder.setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    dialog.dismiss();
+                    if (MusicList != null) {
+                        MusicInfo music = MusicList.get(p);
+                        intent.putExtra("url", music.getMusicPath());
+                        intent.putExtra("title",music.getMusicTitle());
+                        intent.putExtra("MSG", APPMessage.NetPlayMsg.download);
+                        startService(intent);
+                        Toast.makeText(getApplicationContext(),
+                                "歌曲下载任务已经提交到后台",
+                                Toast.LENGTH_SHORT).show();
+                    }
+                }
+            });
+            builder.setNegativeButton("取消", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    dialog.dismiss();
+                }
+            });
+            builder.create().show();
+            return true;
+        }
+    }
+
+
+
     //播放按钮的监听器
     private class PlayButtonOnClick implements View.OnClickListener {
 

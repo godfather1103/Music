@@ -10,6 +10,7 @@ import android.os.IBinder;
 import android.os.Message;
 import android.support.annotation.Nullable;
 import android.media.MediaPlayer.OnCompletionListener;
+import android.util.Log;
 
 import com.demo.hwq.constant.APPMessage;
 import com.demo.hwq.util.MusicAppUtil;
@@ -83,6 +84,12 @@ public class PlayService extends Service {
         }else if(msg==APPMessage.PlayMsg.beginSearch){
             String key = intent.getStringExtra("key");
             searchNetSong(key);
+        }else if(msg==APPMessage.NetPlayMsg.download){
+            String title = intent.getStringExtra("title");
+            NetWork net = new NetWork();
+            net.doFlag = APPMessage.NetPlayMsg.download;
+            net.title = title;
+            new Thread(net).start();
         }
 
         return super.onStartCommand(intent, flags, startId);
@@ -177,6 +184,7 @@ public class PlayService extends Service {
     private void searchNetSong(String key){
         NetWork net = new NetWork();
         net.key = key;
+        net.doFlag = APPMessage.PlayMsg.beginSearch;
         new Thread(net).start();
     }
 
@@ -186,24 +194,43 @@ public class PlayService extends Service {
             super.handleMessage(msg);
             Bundle data = msg.getData();
             int flag = data.getInt("result");
-            intent.putExtra("OverMsg",flag);
+            String title = data.getString("title");
+            intent.putExtra("OverMsg", flag);
+            if (title!=null)
+                intent.putExtra("title",title);
             intent.setAction("com.demo.ccb.service.PlayService");
             sendBroadcast(intent);
         }
     };
 
     private class NetWork implements Runnable{
-        public String key;
+        public String key;//搜索歌曲的关键词
+        public int doFlag;//应该采用的动作标志
+        public String title;//下载的歌曲名
+
+
         @Override
         public void run() {
-            mp3list = MusicAppUtil.getMusicListFromNet(key);
+
             Message msg = new Message();
             Bundle data = new Bundle();
-            if (mp3list!=null&&mp3list.size()>0){
-                data.putInt("result",APPMessage.PlayMsg.searchSuccess);
-            }else {
-                data.putInt("result",APPMessage.PlayMsg.searchFail);
+            if (doFlag==APPMessage.PlayMsg.beginSearch){
+                mp3list = MusicAppUtil.getMusicListFromNet(key);
+                if (mp3list!=null&&mp3list.size()>0){
+                    data.putInt("result",APPMessage.PlayMsg.searchSuccess);
+                }else {
+                    data.putInt("result",APPMessage.PlayMsg.searchFail);
+                }
+            }else if(doFlag==APPMessage.NetPlayMsg.download){
+                if (MusicAppUtil.downloadFile(path,title)){
+                    data.putInt("result",APPMessage.NetPlayMsg.downloadSuccess);
+                    String prefix= path.substring(path.lastIndexOf(".")+1);
+                    data.putString("title",title+"."+prefix);
+                }else {
+                    data.putInt("result",APPMessage.NetPlayMsg.downloadFail);
+                }
             }
+
             msg.setData(data);
             handler.sendMessage(msg);
         }

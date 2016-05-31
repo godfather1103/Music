@@ -108,6 +108,19 @@ public class MusicInfo  implements Parcelable {
 	}
 
 	@Override
+	public String toString() {
+		return "MusicInfo{" +
+				"MusicID=" + MusicID +
+				", MusicTitle='" + MusicTitle + '\'' +
+				", MusicArtist='" + MusicArtist + '\'' +
+				", MusicTime=" + MusicTime +
+				", MusicSize=" + MusicSize +
+				", MusicPath='" + MusicPath + '\'' +
+				", ico='" + ico + '\'' +
+				'}';
+	}
+
+	@Override
 	public int describeContents() {
 		return 0;
 	}

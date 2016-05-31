@@ -10,18 +10,28 @@ import java.util.List;
 
 import android.content.ContentResolver;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.os.Environment;
 import android.provider.MediaStore;
+import android.util.Log;
 
+import com.demo.hwq.constant.APPMessage;
 import com.demo.hwq.vo.MusicInfo;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import ccb.demo.com.studio.R;
+
 public class MusicAppUtil {
 
     public static final API api = new API();
+
+    //内存卡的路径
+    public static String sDir = null;
 
     /**
      * 用于从数据库中查询歌曲的信息，保存在List当中
@@ -67,6 +77,7 @@ public class MusicAppUtil {
         }
         if (cursor != null)
             cursor.close();
+        new DBUtil().setMusicList(MusicList);
         return MusicList;
     }
 
@@ -105,6 +116,32 @@ public class MusicAppUtil {
         return MusicList;
     }
 
+    /*
+    *从网络中下载歌曲，并返回相应标志
+    *
+    *@return boolean
+    * */
+    public static boolean downloadFile(String url,String title){
+        boolean flag = false;
+        String sdcard = MusicAppUtil.checkFileAndFolder();
+        String prefix = null;
+        if (url!=null){
+            prefix= url.substring(url.lastIndexOf(".")+1);
+        }
+        try {
+            flag = api.DownLoad(url,title+"."+prefix,sdcard+"song/");
+        } catch (IOException e) {
+            Log.e("Exception",e.getMessage());
+            flag = false;
+        }
+        return flag;
+    }
+
+
+    /*
+    * 把歌曲的json对象转换成MusicInfo对象
+    *
+    * */
     public static MusicInfo MusicJSON2Object(JSONObject song) {
         MusicInfo musicInfo = new MusicInfo();
         try {
@@ -147,6 +184,108 @@ public class MusicAppUtil {
                 }
             }
         }
+    }
+
+
+    //保存图片到SD卡
+    public static void saveJPGToFile(Bitmap bitmap, String _file)
+            throws IOException {
+        BufferedOutputStream os = null;
+        try {
+            File file = new File(_file);
+
+            int end = _file.lastIndexOf(File.separator);
+            String _filePath = _file.substring(0, end);
+            File filePath = new File(_filePath);
+            if (!filePath.exists()) {
+                filePath.mkdirs();
+            }
+            file.createNewFile();
+            os = new BufferedOutputStream(new FileOutputStream(file));
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, os);
+        } finally {
+            if (os != null) {
+                try {
+                    os.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+
+    //检查文件夹存在情况
+    public static String checkFileAndFolder() {
+        String status = Environment.getExternalStorageState();
+
+        if (status.equals(Environment.MEDIA_MOUNTED)) {
+            sDir = APPMessage.APPPath.ExistSD;
+        } else {
+            sDir = APPMessage.APPPath.NoExistSD;
+        }
+        File destDir = new File(sDir);
+        if (!destDir.exists()) {
+            destDir.mkdirs();
+        }
+
+        destDir = new File(sDir + "skin/");
+        if (!destDir.exists()) {
+            destDir.mkdirs();
+        }
+
+        destDir = new File(sDir + "lyric/");
+        if (!destDir.exists()) {
+            destDir.mkdirs();
+        }
+
+        destDir = new File(sDir + "song/");
+        if (!destDir.exists()) {
+            destDir.mkdirs();
+        }
+
+        destDir = new File(APPMessage.APPPath.NoExistSD + "/databases/");
+        if (!destDir.exists()) {
+            destDir.mkdirs();
+        }
+
+        destDir = new File(APPMessage.APPPath.NoExistSD + "/databases/Music.db");
+        if (!destDir.exists()) {
+            //初始化数据库
+            SQLiteDatabase db = SQLiteDatabase.openOrCreateDatabase(
+                    APPMessage.APPPath.NoExistSD + "/databases/Music.db",
+                    null);
+            StringBuilder CurrentSong = new StringBuilder();
+            CurrentSong.append("CREATE TABLE IF NOT EXISTS [CurrentSong] (");
+            CurrentSong.append("  [position] INTEGER NOT NULL DEFAULT 0, ");
+            CurrentSong.append("  [PlayState] VARCHAR NOT NULL DEFAULT 0); ");
+
+            StringBuilder LocalMusicList = new StringBuilder();
+            LocalMusicList.append("CREATE TABLE IF NOT EXISTS [LocalMusicList] (");
+            LocalMusicList.append("  [MusicID] INTEGER NOT NULL, ");
+            LocalMusicList.append("  [MusicTitle] VARCHAR NOT NULL, ");
+            LocalMusicList.append("  [MusicArtist] VARCHAR, ");
+            LocalMusicList.append("  [MusicTime] INTEGER NOT NULL, ");
+            LocalMusicList.append("  [MusicSize] INTEGER NOT NULL, ");
+            LocalMusicList.append("  [MusicPath] VARCHAR NOT NULL, ");
+            LocalMusicList.append("  [Ico] VARCHAR); ");
+
+            StringBuilder NetMusicList = new StringBuilder();
+            NetMusicList.append("CREATE TABLE IF NOT EXISTS [NetMusicList] (");
+            NetMusicList.append("  [MusicID] INTEGER NOT NULL, ");
+            NetMusicList.append("  [MusicTitle] VARCHAR NOT NULL, ");
+            NetMusicList.append("  [MusicArtist] VARCHAR, ");
+            NetMusicList.append("  [MusicTime] INTEGER NOT NULL, ");
+            NetMusicList.append("  [MusicSize] INTEGER NOT NULL, ");
+            NetMusicList.append("  [MusicPath] VARCHAR NOT NULL, ");
+            NetMusicList.append("  [Ico] VARCHAR); ");
+
+            db.execSQL(CurrentSong.toString());
+            db.execSQL(LocalMusicList.toString());
+            db.execSQL(NetMusicList.toString());
+            db.close();
+        }
+        return sDir;
     }
 
 }

@@ -14,6 +14,13 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 //import java.net.HttpURLConnection;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -78,12 +85,20 @@ public class API {
         return httpRequest("POST", action, data);
     }
 
+    /*
+    *把HTTP请求返回的数据封装成json对象
+    *
+    * */
     private JSONObject httpRequest(String method, String action, List<NameValuePair> query) throws Exception {
         String result;
         result = rawHttpRequest(method, action, query);
         return new JSONObject(result);
     }
 
+    /*
+    * 发送HTTP请求，并返回结果
+    *
+    * */
     private String rawHttpRequest(String method, String action, List<NameValuePair> query) throws Exception {
         String result = null;
         HttpClient httpClient = new DefaultHttpClient();
@@ -127,6 +142,46 @@ public class API {
             e.printStackTrace();
         }
         return mp3Url;
+    }
+
+    //从网络上下载文件
+    public boolean DownLoad(String urlStr, String fileName, String savePath) throws IOException {
+
+        URL url = new URL(urlStr);
+        URLConnection conn = url.openConnection();
+        //设置超时间为4秒
+        conn.setConnectTimeout(4 * 1000);
+        //防止屏蔽程序抓取而返回403错误
+        for (int i = 0; i < 4; i++) {
+            conn.setRequestProperty(headerList.get(i).getName(), headerList.get(i).getValue());
+        }
+
+
+        conn.setRequestProperty("User-Agent",
+                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.152 Safari/537.36");
+
+        //得到输入流
+        BufferedInputStream bis = new BufferedInputStream(conn.getInputStream());;// 定义一个带缓冲的输入流 。
+
+        //得到输出流
+        File f = new File(savePath + fileName);
+        if (f.exists()){
+            f.delete();
+        }
+        BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(f)); // 定义一个带缓冲的输出流。
+
+        byte[] buffer = new byte[4*1024];
+        int len=-1;
+        while((len = bis.read(buffer)) != -1) {
+            bos.write(buffer,0,len);
+        }
+        bos.flush();
+        if (bis != null)
+            bis.close();
+        if (bos != null)
+            bos.close();
+
+        return true;
     }
 
 }

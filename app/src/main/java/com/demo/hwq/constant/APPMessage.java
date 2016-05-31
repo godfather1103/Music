@@ -25,10 +25,10 @@ public final class APPMessage {
     }
 
     public static final class NetPlayMsg{
-        public static final int play = 6;
-        public static final int pause = 7;
-        public static final int stop = 8;
-        public static final int replay = 9;
+        public static final int download = 9;
+        public static final int downloadSuccess = 10;
+        public static final int downloadFail = 11;
+
 
     }
 }

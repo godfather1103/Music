@@ -89,7 +89,8 @@ public class MainActivity extends AppCompatActivity {
         //建立后台PlayService与前台MainActivity间的通信
         intent.setClass(MainActivity.this, PlayService.class);
 
-        checkFileAndFolder();
+        //checkFileAndFolder();
+        sDir = MusicAppUtil.checkFileAndFolder();
         init();
         setLisnter();
         back2Main();
@@ -179,9 +180,11 @@ public class MainActivity extends AppCompatActivity {
                 R.layout.musiclist,
                 new String[]{"title", "artist", "duration"},
                 new int[]{R.id.SongTitle, R.id.Singer, R.id.SongTime});
+
         MusiclistView = (ListView) findViewById(R.id.MusicList);
         MusiclistView.setOnItemClickListener(new MusicListItemClickListener());
         MusiclistView.setAdapter(sa);
+
     }
 
     //检查文件夹和数据库创建情况
