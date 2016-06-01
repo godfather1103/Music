@@ -86,9 +86,10 @@ public class PlayService extends Service {
             searchNetSong(key);
         }else if(msg==APPMessage.NetPlayMsg.download){
             String title = intent.getStringExtra("title");
+            String artist = intent.getStringExtra("artist");
             NetWork net = new NetWork();
             net.doFlag = APPMessage.NetPlayMsg.download;
-            net.title = title;
+            net.title = artist+"-"+title;
             new Thread(net).start();
         }
 

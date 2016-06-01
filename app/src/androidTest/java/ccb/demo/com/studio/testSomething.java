@@ -3,6 +3,7 @@ package ccb.demo.com.studio;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
+import com.demo.hwq.util.API;
 import com.demo.hwq.util.MusicAppUtil;
 
 import junit.framework.Assert;
@@ -23,16 +24,24 @@ import java.net.URLConnection;
 public class testSomething extends AndroidTestCase {
 
     @Test
-    public void testDownload() throws IOException {
+    public void testDownload() throws Exception {
         String url = "http://192.168.0.105:8080/img/img1_large.jpg";
+        url = "http://music.163.com/api/song/lyric?os=osx&id=307081&lv=-1&kv=-1&tv=-1";
         String sdcard = MusicAppUtil.checkFileAndFolder();
-        //logger.info(sdcard);
         Log.i("我的测试消息", sdcard);
-        //DownLoad("http://192.168.0.105:8080/img/abc.flac", "a.flac", sdcard);
-        DownLoad(url, "a.jpg", sdcard);
-        String a = "abc";
-        Assert.assertEquals("abc", a);
-
+        API api = new API();
+        String res = api.rawHttpRequest("GET",url,null);
+        Log.i("我的测试消息", res);
+        File f = new File(sdcard+"a.gc");
+        if (f.exists()){
+            f.delete();
+        }
+        BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(f));
+        byte[] bytes = res.getBytes();
+        bos.write(bytes,0,bytes.length);
+        bos.flush();
+        bos.close();
+        //DownLoad(url, "a.jpg", sdcard);
     }
 
 

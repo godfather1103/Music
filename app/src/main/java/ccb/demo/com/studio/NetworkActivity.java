@@ -307,10 +307,9 @@ public class NetworkActivity extends AppCompatActivity {
                 Toast.makeText(getApplicationContext(),
                         "歌曲下载成功，请重新扫描本地音乐",
                         Toast.LENGTH_SHORT).show();
-
                         Intent scanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
                         scanIntent.setData(Uri.fromFile(new File(MusicAppUtil.checkFileAndFolder()+"song/"+title)));
-                        NetworkActivity.this.sendBroadcast(scanIntent);
+                        sendBroadcast(scanIntent);
             }else if (msg==APPMessage.NetPlayMsg.downloadFail){
                 Toast.makeText(getApplicationContext(),
                         "歌曲下载失败！",
@@ -354,6 +353,7 @@ public class NetworkActivity extends AppCompatActivity {
                         MusicInfo music = MusicList.get(p);
                         intent.putExtra("url", music.getMusicPath());
                         intent.putExtra("title",music.getMusicTitle());
+                        intent.putExtra("artist",music.getMusicArtist());
                         intent.putExtra("MSG", APPMessage.NetPlayMsg.download);
                         startService(intent);
                         Toast.makeText(getApplicationContext(),

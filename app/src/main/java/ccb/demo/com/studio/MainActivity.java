@@ -1,5 +1,6 @@
 package ccb.demo.com.studio;
 
+import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -8,9 +9,13 @@ import android.content.IntentFilter;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.media.MediaScannerConnection;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Message;
 import android.os.ParcelFileDescriptor;
 import android.os.Parcelable;
 import android.support.v7.app.AppCompatActivity;
@@ -78,7 +83,23 @@ public class MainActivity extends AppCompatActivity {
     Button PreviousSong;
     Button NextSong;
 
+    //sd卡的位置
     String sDir = null;
+
+    //是否注册了广播接收器
+    boolean isregisterReceiver = false;
+
+    //长时间加载对话框
+    ProgressDialog loading = null;
+    private Handler handler = new Handler(){
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            if (MusicList != null)
+                setListAdpter(MusicList);
+            loading.dismiss();
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -121,9 +142,46 @@ public class MainActivity extends AppCompatActivity {
 
         } else if (id == R.id.action_find) {
             MusicList = null;
-            MusicList = MusicAppUtil.getMusicListFromSD(cr);
-            if (MusicList != null)
-                setListAdpter(MusicList);
+            if (loading!=null){
+                loading.dismiss();
+            }
+            loading = ProgressDialog.show(this,"扫描","正在扫描歌曲中...");
+            new Thread(){
+                @Override
+                public void run() {
+                    if (isregisterReceiver)
+                        unregisterReceiver(rec);
+                    if (Build.VERSION.SDK_INT>=Build.VERSION_CODES.KITKAT){
+/*                        MediaScannerConnection.scanFile(MainActivity.this,new String[]{Environment.getExternalStorageDirectory().toString()},new String[]{"audio*//*"},new MediaScannerConnection.OnScanCompletedListener(){
+
+                            @Override
+                            public void onScanCompleted(String path, Uri uri) {
+                                Log.i("ExternalStorage", "Scanned " + path + ":");
+                                Log.i("ExternalStorage", "-> uri=" + uri);
+                            }
+                        });*/
+                        String ACTION_MEDIA_SCANNER_SCAN_DIR =        "android.intent.action.MEDIA_SCANNER_SCAN_DIR";
+                        Intent scanInt = new Intent(ACTION_MEDIA_SCANNER_SCAN_DIR);
+                        scanInt.setData(Uri.fromFile(Environment.getExternalStorageDirectory()));
+                        sendBroadcast(scanInt);
+
+                    }else{
+                        sendBroadcast(new Intent(Intent.ACTION_MEDIA_MOUNTED, Uri.parse("file://" + Environment.getExternalStorageDirectory())));
+                    }
+                    try {
+                        this.sleep(4000);
+                    } catch (InterruptedException e) {
+                        Log.e("Exception:",e.getMessage());
+                        e.printStackTrace();
+                    }
+                    if (!isregisterReceiver){
+                        registerReceiver(rec,filter);
+                        isregisterReceiver = true;
+                    }
+                    MusicList = MusicAppUtil.getMusicListFromSD(cr);
+                    handler.sendEmptyMessage(0);
+                }
+            }.start();
         } else if (id == R.id.action_openactivity) {
             Intent ac1_ac2 = new Intent();
             ac1_ac2.setClass(MainActivity.this, NetworkActivity.class);
@@ -314,15 +372,25 @@ public class MainActivity extends AppCompatActivity {
                         intent.putExtra("MSG", APPMessage.PlayMsg.play);
                         PlaySong.setBackgroundResource(R.drawable.pause);
                         isPause = false;
+                        if (isregisterReceiver)
+                            unregisterReceiver(rec);
+                        registerReceiver(rec, filter);
+                        isregisterReceiver = true;
                     } else {
                         if (isPause) {
                             intent.putExtra("MSG", APPMessage.PlayMsg.replay);
                             PlaySong.setBackgroundResource(R.drawable.pause);
                             isPause = false;
+                            if (isregisterReceiver)
+                                unregisterReceiver(rec);
+                            registerReceiver(rec, filter);
+                            isregisterReceiver = true;
                         } else {
                             intent.putExtra("MSG", APPMessage.PlayMsg.pause);
                             PlaySong.setBackgroundResource(R.drawable.play);
                             isPause = true;
+                            unregisterReceiver(rec);
+                            isregisterReceiver = false;
                         }
                     }
                 } else {
@@ -339,7 +407,13 @@ public class MainActivity extends AppCompatActivity {
                     if (MusicList != null) {
                         intent.putExtra("MSG", APPMessage.PlayMsg.play);
                         setCurrentSong(MusicList, position);
+                        PlaySong.setBackgroundResource(R.drawable.pause);
+                        isPause = false;
                     }
+                    if (isregisterReceiver)
+                        unregisterReceiver(rec);
+                    registerReceiver(rec, filter);
+                    isregisterReceiver = true;
                 }
 
                 music = MusicList.get(position);
@@ -373,6 +447,14 @@ public class MainActivity extends AppCompatActivity {
                     String time = MusicTime / 60000 + ":" + (MusicTime % 60000) / 1000;
                     CurrentSongTime.setText(time);
                 }
+            }else if (msg==APPMessage.NetPlayMsg.downloadFail){
+                Toast.makeText(getApplicationContext(),
+                        "歌曲下载失败！",
+                        Toast.LENGTH_LONG).show();
+            }else if (msg==APPMessage.NetPlayMsg.downloadSuccess){
+                Toast.makeText(getApplicationContext(),
+                        "歌曲下载成功，请重新扫描本地音乐",
+                        Toast.LENGTH_SHORT).show();
             }
         }
     }
@@ -412,7 +494,7 @@ public class MainActivity extends AppCompatActivity {
                 try {
                     pfd.close();
                 } catch (IOException e) {
-                    Log.d("aaa", e.getMessage());
+                    Log.i("aaa", e.getMessage());
                 }
             }
         }
@@ -431,7 +513,6 @@ public class MainActivity extends AppCompatActivity {
         NextSong = (Button) findViewById(R.id.NextSong);
         cr = getContentResolver();
         StartTime = new Date();
-        //instance = this;
     }
 
 
@@ -482,6 +563,9 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    //广播的Filter
+    IntentFilter filter = new IntentFilter();
+    BroadcastReceive rec = new BroadcastReceive();
 
     //注册各个组件的监听器
     protected void setLisnter() {
@@ -489,10 +573,9 @@ public class MainActivity extends AppCompatActivity {
         PlaySong.setOnClickListener(new PlayButtonOnClick());
         PreviousSong.setOnClickListener(new PlayButtonOnClick());
         NextSong.setOnClickListener(new PlayButtonOnClick());
-
-        IntentFilter filter = new IntentFilter();
         filter.addAction("com.demo.ccb.service.PlayService");
-        registerReceiver(new BroadcastReceive(), filter);
+
+
     }
 
 }

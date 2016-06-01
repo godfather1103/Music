@@ -99,7 +99,7 @@ public class API {
     * 发送HTTP请求，并返回结果
     *
     * */
-    private String rawHttpRequest(String method, String action, List<NameValuePair> query) throws Exception {
+    public String rawHttpRequest(String method, String action, List<NameValuePair> query) throws Exception {
         String result = null;
         HttpClient httpClient = new DefaultHttpClient();
         HttpResponse httpResponse = null;

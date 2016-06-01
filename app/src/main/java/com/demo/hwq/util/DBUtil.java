@@ -2,6 +2,7 @@ package com.demo.hwq.util;
 
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.util.Log;
 
 import com.demo.hwq.constant.APPMessage;
 import com.demo.hwq.vo.MusicInfo;
@@ -15,6 +16,7 @@ import java.util.List;
 public class DBUtil {
 
     private SQLiteDatabase sqlite = null;
+    private String sql = null;
 
     public DBUtil() {
         sqlite = SQLiteDatabase.openOrCreateDatabase(
@@ -84,10 +86,8 @@ public class DBUtil {
 
     //插入本地歌曲列表到本地歌曲数据库中
     public void setMusicList(List<MusicInfo> MusicList) {
+        this.deleMusic();
         for (MusicInfo music : MusicList) {
-            if (existMusic(music.getMusicID())) {
-                deleteMusic(music.getMusicID());
-            }
             insertMusic(music);
         }
         close();
@@ -95,16 +95,17 @@ public class DBUtil {
 
     //插入本地歌曲信息到本地歌曲数据库中
     public void insertMusic(MusicInfo music) {
-        sqlite.execSQL("insert into " +
-                        "LocalMusicList(" +
-                        "MusicID," +
-                        "MusicTitle," +
-                        "MusicArtist," +
-                        "MusicTime," +
-                        "MusicSize," +
-                        "MusicPath," +
-                        "ico) " +
-                        "values(?,?,?,?,?,?,?);",
+        sql = "insert into " +
+                "LocalMusicList(" +
+                "MusicID," +
+                "MusicTitle," +
+                "MusicArtist," +
+                "MusicTime," +
+                "MusicSize," +
+                "MusicPath," +
+                "ico) " +
+                "values(?,?,?,?,?,?,?);";
+        sqlite.execSQL(sql,
                 new Object[]{
                         music.getMusicID(),
                         music.getMusicTitle(),
@@ -112,7 +113,32 @@ public class DBUtil {
                         music.getMusicTime(),
                         music.getMusicSize(),
                         music.getMusicPath(),
-                        music.getIco()});
+                        music.getIco()
+                }
+        );
+    }
+
+    //修改本地歌曲信息到本地歌曲数据库中
+    public void updateMusic(MusicInfo music) {
+        sql = "update LocalMusicList " +
+                "set MusicTitle=?," +
+                "MusicArtist=?," +
+                "MusicTime=?," +
+                "MusicSize=?," +
+                "MusicPath=?," +
+                "ico=? " +
+                "where MusicID=?";
+        Log.i("sql",sql);
+        sqlite.execSQL(sql,
+                new Object[]{
+                        music.getMusicTitle(),
+                        music.getMusicArtist(),
+                        music.getMusicTime(),
+                        music.getMusicSize(),
+                        music.getMusicPath(),
+                        music.getIco(),
+                        music.getMusicID()
+                });
     }
 
     //判断本地歌曲数据库中是否存在相应的歌曲信息
@@ -124,9 +150,40 @@ public class DBUtil {
         return flag;
     }
 
+    //判断本地歌曲数据库中相应的歌曲信息是否变化
+    public boolean isChangeMusic(MusicInfo music) {
+        boolean flag;
+        sql = "select * from LocalMusicList where " +
+                "MusicID = ? " +
+                "and MusicTitle=? " +
+                "and MusicArtist=? " +
+                "and MusicTime=? " +
+                "and MusicSize=? " +
+                "and MusicPath=? " +
+                "and ico=? ";
+        Cursor cr = sqlite.rawQuery(sql,
+                new String[]{
+                        String.valueOf(music.getMusicID()),
+                        music.getMusicTitle(),
+                        music.getMusicArtist(),
+                        String.valueOf(music.getMusicTime()),
+                        String.valueOf(music.getMusicSize()),
+                        music.getMusicPath(),
+                        music.getIco()
+                });
+        flag = cr.moveToNext();
+        cr.close();
+        return !flag;
+    }
+
     //删除本地歌曲数据库中相应的歌曲
     public void deleteMusic(long MusicID) {
         sqlite.execSQL("delete from LocalMusicList where MusicID = ?;", new Object[]{MusicID});
+    }
+
+    //删除网络歌曲列表数据库中的数据
+    public void deleMusic() {
+        sqlite.execSQL("delete from LocalMusicList;");
     }
 
 
@@ -173,16 +230,17 @@ public class DBUtil {
 
     //插入网络歌曲信息到网络歌曲数据库中
     public void insertMusicInNetTable(MusicInfo music) {
-        sqlite.execSQL("insert into " +
-                        "NetMusicList(" +
-                        "MusicID," +
-                        "MusicTitle," +
-                        "MusicArtist," +
-                        "MusicTime," +
-                        "MusicSize," +
-                        "MusicPath," +
-                        "ico) " +
-                        "values(?,?,?,?,?,?,?);",
+        sql = "insert into " +
+                "NetMusicList(" +
+                "MusicID," +
+                "MusicTitle," +
+                "MusicArtist," +
+                "MusicTime," +
+                "MusicSize," +
+                "MusicPath," +
+                "ico) " +
+                "values(?,?,?,?,?,?,?);";
+        sqlite.execSQL(sql,
                 new Object[]{
                         music.getMusicID(),
                         music.getMusicTitle(),
