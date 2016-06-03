@@ -28,7 +28,11 @@ public final class APPMessage {
         public static final int download = 9;
         public static final int downloadSuccess = 10;
         public static final int downloadFail = 11;
+    }
 
-
+    public static final class LrcMsg{
+        public static final int showLrcIndex = 12;
+        public static final int LrcNotFind = 13;
+        public static final int LrcReadSuccess = 14;
     }
 }

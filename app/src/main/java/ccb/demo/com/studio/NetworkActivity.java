@@ -136,11 +136,6 @@ public class NetworkActivity extends AppCompatActivity {
             stopService(intent);
             System.exit(0);
         }
-//        else if (id == R.id.action_openactivity) {
-//            back2Main();
-//
-//        }
-
         return super.onOptionsItemSelected(item);
     }
 
@@ -354,6 +349,7 @@ public class NetworkActivity extends AppCompatActivity {
                         intent.putExtra("url", music.getMusicPath());
                         intent.putExtra("title",music.getMusicTitle());
                         intent.putExtra("artist",music.getMusicArtist());
+                        intent.putExtra("music",music);
                         intent.putExtra("MSG", APPMessage.NetPlayMsg.download);
                         startService(intent);
                         Toast.makeText(getApplicationContext(),
@@ -412,7 +408,6 @@ public class NetworkActivity extends AppCompatActivity {
 
         //是否随机播放
         public boolean isRandom() {
-
             return isRandom != 0;
         }
     }

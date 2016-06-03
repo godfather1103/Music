@@ -1,5 +1,7 @@
 package com.demo.hwq.util;
 
+import android.util.Log;
+
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
@@ -184,4 +186,22 @@ public class API {
         return true;
     }
 
+    //从网络上下载歌词
+    public boolean DownLoadLrc(String musicid,String fileName, String savePath) throws Exception {
+        String url = "http://music.163.com/api/song/lyric?os=osx&id=$$&lv=-1&kv=-1&tv=-1";
+        url = url.replace("$$",musicid);
+        String res = rawHttpRequest("GET", url, null);
+        Log.i("下载歌词", res);
+        File f = new File(savePath + fileName);
+        Log.i("下载歌词", savePath + fileName);
+        if (f.exists()){
+            f.delete();
+        }
+        BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(f));
+        byte[] bytes = res.getBytes();
+        bos.write(bytes,0,bytes.length);
+        bos.flush();
+        bos.close();
+        return true;
+    }
 }

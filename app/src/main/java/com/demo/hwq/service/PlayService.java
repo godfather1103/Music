@@ -13,9 +13,12 @@ import android.media.MediaPlayer.OnCompletionListener;
 import android.util.Log;
 
 import com.demo.hwq.constant.APPMessage;
+import com.demo.hwq.util.LrcUtil;
 import com.demo.hwq.util.MusicAppUtil;
+import com.demo.hwq.vo.LrcContent;
 import com.demo.hwq.vo.MusicInfo;
 
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -39,10 +42,13 @@ public class PlayService extends Service {
                 while (thread.isAlive()) {
                     try {
                         Thread.sleep(1000);
+
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
                     if (mediaPlayer.isPlaying()) {
+                        //Log.i("服务的log--getCurrent", String.valueOf(mediaPlayer.getCurrentPosition()));
+                        //Log.i("服务的log--getDuration", String.valueOf(mediaPlayer.getDuration()));
                         intent.putExtra("OverMsg", APPMessage.PlayMsg.playtime);
                         intent.setAction("com.demo.ccb.service.PlayService");
                         sendBroadcast(intent);
@@ -81,15 +87,17 @@ public class PlayService extends Service {
             stop();
         } else if (msg == APPMessage.PlayMsg.replay) {
             replay();
-        }else if(msg==APPMessage.PlayMsg.beginSearch){
+        } else if (msg == APPMessage.PlayMsg.beginSearch) {
             String key = intent.getStringExtra("key");
             searchNetSong(key);
-        }else if(msg==APPMessage.NetPlayMsg.download){
+        } else if (msg == APPMessage.NetPlayMsg.download) {
             String title = intent.getStringExtra("title");
             String artist = intent.getStringExtra("artist");
+            MusicInfo music = intent.getParcelableExtra("music");
             NetWork net = new NetWork();
             net.doFlag = APPMessage.NetPlayMsg.download;
-            net.title = artist+"-"+title;
+            net.title = artist + "-" + title;
+            net.music = music;
             new Thread(net).start();
         }
 
@@ -182,7 +190,7 @@ public class PlayService extends Service {
     }
 
 
-    private void searchNetSong(String key){
+    private void searchNetSong(String key) {
         NetWork net = new NetWork();
         net.key = key;
         net.doFlag = APPMessage.PlayMsg.beginSearch;
@@ -197,38 +205,39 @@ public class PlayService extends Service {
             int flag = data.getInt("result");
             String title = data.getString("title");
             intent.putExtra("OverMsg", flag);
-            if (title!=null)
-                intent.putExtra("title",title);
+            if (title != null)
+                intent.putExtra("title", title);
             intent.setAction("com.demo.ccb.service.PlayService");
             sendBroadcast(intent);
         }
     };
 
-    private class NetWork implements Runnable{
+    private class NetWork implements Runnable {
         public String key;//搜索歌曲的关键词
         public int doFlag;//应该采用的动作标志
         public String title;//下载的歌曲名
-
+        public MusicInfo music;//歌曲的bean
 
         @Override
         public void run() {
 
             Message msg = new Message();
             Bundle data = new Bundle();
-            if (doFlag==APPMessage.PlayMsg.beginSearch){
+            if (doFlag == APPMessage.PlayMsg.beginSearch) {
                 mp3list = MusicAppUtil.getMusicListFromNet(key);
-                if (mp3list!=null&&mp3list.size()>0){
-                    data.putInt("result",APPMessage.PlayMsg.searchSuccess);
-                }else {
-                    data.putInt("result",APPMessage.PlayMsg.searchFail);
+                if (mp3list != null && mp3list.size() > 0) {
+                    data.putInt("result", APPMessage.PlayMsg.searchSuccess);
+                } else {
+                    data.putInt("result", APPMessage.PlayMsg.searchFail);
                 }
-            }else if(doFlag==APPMessage.NetPlayMsg.download){
-                if (MusicAppUtil.downloadFile(path,title)){
-                    data.putInt("result",APPMessage.NetPlayMsg.downloadSuccess);
-                    String prefix= path.substring(path.lastIndexOf(".")+1);
-                    data.putString("title",title+"."+prefix);
-                }else {
-                    data.putInt("result",APPMessage.NetPlayMsg.downloadFail);
+            } else if (doFlag == APPMessage.NetPlayMsg.download) {
+                if (MusicAppUtil.downloadFile(path, title)) {
+                    MusicAppUtil.downloadLrcFile(music);
+                    data.putInt("result", APPMessage.NetPlayMsg.downloadSuccess);
+                    String prefix = path.substring(path.lastIndexOf(".") + 1);
+                    data.putString("title", title + "." + prefix);
+                } else {
+                    data.putInt("result", APPMessage.NetPlayMsg.downloadFail);
                 }
             }
 
@@ -237,4 +246,44 @@ public class PlayService extends Service {
         }
     }
 
+
+    /*
+    *以下代码用于歌词显示
+    * */
+    private List<LrcContent> lrcList = new ArrayList<LrcContent>(); //存放歌词列表对象
+    private int index = 0;          //歌词检索值
+    private LrcUtil lrcUtil;
+
+    public void initLrc(){
+        lrcUtil = new LrcUtil();
+
+    }
+
+        //获取歌词索引
+    public int lrcIndex() {
+        int index = 0;
+        if (mediaPlayer.isPlaying()){
+            int currentTime = mediaPlayer.getCurrentPosition();
+            int duration = mediaPlayer.getDuration();
+            if(currentTime < duration) {
+                for (int i = 0; i < lrcList.size(); i++) {
+                    if (i < lrcList.size() - 1) {
+                        if (currentTime < lrcList.get(i).getLrcTime() && i == 0) {
+                            index = i;
+                        }
+                        if (currentTime > lrcList.get(i).getLrcTime()
+                                && currentTime < lrcList.get(i + 1).getLrcTime()) {
+                            index = i;
+                        }
+                    }
+                    if (i == lrcList.size() - 1
+                            && currentTime > lrcList.get(i).getLrcTime()) {
+                        index = i;
+                    }
+                }
+            }
+        }
+
+        return index;
+    }
 }

@@ -4,7 +4,9 @@ import android.test.AndroidTestCase;
 import android.util.Log;
 
 import com.demo.hwq.util.API;
+import com.demo.hwq.util.DBUtil;
 import com.demo.hwq.util.MusicAppUtil;
+import com.demo.hwq.vo.MusicInfo;
 
 import junit.framework.Assert;
 
@@ -17,6 +19,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.List;
 
 /**
  * Created by godfa on 2016/5/27.
@@ -25,8 +28,12 @@ public class testSomething extends AndroidTestCase {
 
     @Test
     public void testDownload() throws Exception {
+/*        List<MusicInfo> list = new DBUtil().getMusicListInNetTable();
+        MusicInfo musicInfo = list.get(0);
+        boolean f = MusicAppUtil.downloadLrcFile(musicInfo);
+        Assert.assertEquals(f,true);*/
         String url = "http://192.168.0.105:8080/img/img1_large.jpg";
-        url = "http://music.163.com/api/song/lyric?os=osx&id=307081&lv=-1&kv=-1&tv=-1";
+        url = "http://music.163.com/api/song/lyric?os=osx&id=30837&lv=-1&kv=-1&tv=-1";
         String sdcard = MusicAppUtil.checkFileAndFolder();
         Log.i("我的测试消息", sdcard);
         API api = new API();

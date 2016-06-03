@@ -1,9 +1,11 @@
 package ccb.demo.com.studio;
 
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.sqlite.SQLiteDatabase;
@@ -20,11 +22,13 @@ import android.os.ParcelFileDescriptor;
 import android.os.Parcelable;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.text.Layout;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.Button;
@@ -56,13 +60,18 @@ public class MainActivity extends AppCompatActivity {
 
     final Intent intent = new Intent();
 
-    //public static MainActivity instance = null;
-
     ContentResolver cr;
 
     List<MusicInfo> MusicList;
 
+    //音乐列表view
     ListView MusiclistView;
+    //歌词列表view
+    public static LrcView lrcShowViewMain;
+    boolean showLrc = false;
+
+    //音乐当前栏目
+    ViewGroup MusicItem;
 
     //音乐还剩的播放时间
     long MusicTime = 0;
@@ -110,7 +119,6 @@ public class MainActivity extends AppCompatActivity {
         //建立后台PlayService与前台MainActivity间的通信
         intent.setClass(MainActivity.this, PlayService.class);
 
-        //checkFileAndFolder();
         sDir = MusicAppUtil.checkFileAndFolder();
         init();
         setLisnter();
@@ -152,14 +160,6 @@ public class MainActivity extends AppCompatActivity {
                     if (isregisterReceiver)
                         unregisterReceiver(rec);
                     if (Build.VERSION.SDK_INT>=Build.VERSION_CODES.KITKAT){
-/*                        MediaScannerConnection.scanFile(MainActivity.this,new String[]{Environment.getExternalStorageDirectory().toString()},new String[]{"audio*//*"},new MediaScannerConnection.OnScanCompletedListener(){
-
-                            @Override
-                            public void onScanCompleted(String path, Uri uri) {
-                                Log.i("ExternalStorage", "Scanned " + path + ":");
-                                Log.i("ExternalStorage", "-> uri=" + uri);
-                            }
-                        });*/
                         String ACTION_MEDIA_SCANNER_SCAN_DIR =        "android.intent.action.MEDIA_SCANNER_SCAN_DIR";
                         Intent scanInt = new Intent(ACTION_MEDIA_SCANNER_SCAN_DIR);
                         scanInt.setData(Uri.fromFile(Environment.getExternalStorageDirectory()));
@@ -200,21 +200,28 @@ public class MainActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    public static Date StartTime;
-
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0) {
-            Date CurTime = new Date();
-            if (CurTime.getTime() - StartTime.getTime() > 2000) {
-                Toast.makeText(this.getApplicationContext(), "再按一次返回键就退出程序！", Toast.LENGTH_SHORT).show();
-                StartTime = CurTime;
-            } else {
-                stopService(intent);
-                setCurrentSong(MusicList, Integer.valueOf(CurrentSongPosition.getText().toString()));
-                finish();
-                System.exit(0);
-            }
+            AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+            builder.setMessage("是否退出应用？");
+            builder.setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    dialog.dismiss();
+                    stopService(intent);
+                    setCurrentSong(MusicList, Integer.valueOf(CurrentSongPosition.getText().toString()));
+                    finish();
+                    System.exit(0);
+                }
+            });
+            builder.setNegativeButton("取消", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    dialog.dismiss();
+                }
+            });
+            builder.create().show();
         }
         return true;
     }
@@ -239,7 +246,6 @@ public class MainActivity extends AppCompatActivity {
                 new String[]{"title", "artist", "duration"},
                 new int[]{R.id.SongTitle, R.id.Singer, R.id.SongTime});
 
-        MusiclistView = (ListView) findViewById(R.id.MusicList);
         MusiclistView.setOnItemClickListener(new MusicListItemClickListener());
         MusiclistView.setAdapter(sa);
 
@@ -337,6 +343,12 @@ public class MainActivity extends AppCompatActivity {
                 MusicInfo music = MusicList.get(position);
                 intent.putExtra("url", music.getMusicPath());
                 intent.putExtra("MSG", APPMessage.PlayMsg.play);
+
+                if (isregisterReceiver)
+                    unregisterReceiver(rec);
+                registerReceiver(rec, filter);
+                isregisterReceiver = true;
+
                 startService(intent);
                 setCurrentSong(MusicList, position);
                 PlaySong.setBackgroundResource(R.drawable.pause);
@@ -439,10 +451,7 @@ public class MainActivity extends AppCompatActivity {
             if (msg == APPMessage.PlayMsg.playover) {
                 NextSong.performClick();
             } else if (msg == APPMessage.PlayMsg.playtime) {
-                //MusicInfo music;
-                //int position = Integer.valueOf(CurrentSongPosition.getText().toString());
                 if (MusicList != null) {
-                    // music = MusicList.get(position);
                     MusicTime = MusicTime - 1000;
                     String time = MusicTime / 60000 + ":" + (MusicTime % 60000) / 1000;
                     CurrentSongTime.setText(time);
@@ -511,8 +520,10 @@ public class MainActivity extends AppCompatActivity {
         PlaySong = (Button) findViewById(R.id.PlaySong);
         PreviousSong = (Button) findViewById(R.id.PreviousSong);
         NextSong = (Button) findViewById(R.id.NextSong);
+        MusicItem = (ViewGroup)findViewById(R.id.MusicItem);
+        lrcShowViewMain = (LrcView)findViewById(R.id.lrcShowViewMain);
+        MusiclistView = (ListView) findViewById(R.id.MusicList);
         cr = getContentResolver();
-        StartTime = new Date();
     }
 
 
@@ -567,6 +578,8 @@ public class MainActivity extends AppCompatActivity {
     IntentFilter filter = new IntentFilter();
     BroadcastReceive rec = new BroadcastReceive();
 
+
+
     //注册各个组件的监听器
     protected void setLisnter() {
         PlayState.setOnClickListener(new PlayButtonOnClick());
@@ -576,6 +589,35 @@ public class MainActivity extends AppCompatActivity {
         filter.addAction("com.demo.ccb.service.PlayService");
 
 
+        //音乐栏目的点击事件
+        MusicItem.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (showLrc){
+                    MusiclistView.setVisibility(View.VISIBLE);
+                    lrcShowViewMain.setVisibility(View.GONE);
+                    showLrc=false;
+                }else {
+                    MusiclistView.setVisibility(View.GONE);
+                    lrcShowViewMain.setVisibility(View.VISIBLE);
+                    showLrc=true;
+                }
+
+/*                Intent ac1_lrc = new Intent();
+                ac1_lrc.setClass(MainActivity.this, lrc.class);
+                CurrentSong.setMusicTime(MusicTime);
+                int position = Integer.valueOf(CurrentSongPosition.getText().toString());
+                Bundle ac1_lrc_bundle = new Bundle();
+                ac1_lrc_bundle.putInt("position", position);
+                ac1_lrc_bundle.putBoolean("isPause", isPause);
+                ac1_lrc_bundle.putParcelable("CurrentSong", CurrentSong);
+                ac1_lrc_bundle.putBoolean("isFirst", isFirst);
+                ac1_lrc_bundle.putParcelableArrayList("MusicList", (ArrayList<? extends Parcelable>) MusicList);
+                ac1_lrc.putExtras(ac1_lrc_bundle);
+                startActivity(ac1_lrc);
+                MainActivity.this.finish();*/
+            }
+        });
     }
 
 }

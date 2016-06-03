@@ -12,7 +12,6 @@ import android.content.ContentResolver;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Log;
@@ -23,8 +22,6 @@ import com.demo.hwq.vo.MusicInfo;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import ccb.demo.com.studio.R;
 
 public class MusicAppUtil {
 
@@ -122,7 +119,7 @@ public class MusicAppUtil {
     *@return boolean
     * */
     public static boolean downloadFile(String url,String title){
-        boolean flag = false;
+        boolean flag;
         String sdcard = MusicAppUtil.checkFileAndFolder();
         String prefix = null;
         if (url!=null){
@@ -131,6 +128,24 @@ public class MusicAppUtil {
         try {
             flag = api.DownLoad(url,title+"."+prefix,sdcard+"song/");
         } catch (IOException e) {
+            Log.e("Exception",e.getMessage());
+            flag = false;
+        }
+        return flag;
+    }
+
+
+    /*
+    *从网络中下载歌词，并返回相应标志
+    *
+    *@return boolean
+    * */
+    public static boolean downloadLrcFile(MusicInfo music){
+        boolean flag;
+        String sdcard = MusicAppUtil.checkFileAndFolder();
+        try {
+            flag = api.DownLoadLrc(String.valueOf(music.getMusicID()),music.getMusicArtist()+"-"+music.getMusicTitle(),sdcard+"lyric/");
+        } catch (Exception e) {
             Log.e("Exception",e.getMessage());
             flag = false;
         }
