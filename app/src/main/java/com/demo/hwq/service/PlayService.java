@@ -10,7 +10,7 @@ import android.os.IBinder;
 import android.os.Message;
 import android.support.annotation.Nullable;
 import android.media.MediaPlayer.OnCompletionListener;
-import android.util.Log;
+import android.view.animation.AnimationUtils;
 
 import com.demo.hwq.constant.APPMessage;
 import com.demo.hwq.util.LrcUtil;
@@ -20,6 +20,9 @@ import com.demo.hwq.vo.MusicInfo;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import ccb.demo.com.studio.MainActivity;
+import ccb.demo.com.studio.R;
 
 
 /**
@@ -32,6 +35,7 @@ public class PlayService extends Service {
     private boolean isPause;                    //暂停状态
     Intent intent = new Intent();
     List<MusicInfo> mp3list = null;
+    MusicInfo music;
 
     @Override
     public void onCreate() {
@@ -47,8 +51,6 @@ public class PlayService extends Service {
                         e.printStackTrace();
                     }
                     if (mediaPlayer.isPlaying()) {
-                        //Log.i("服务的log--getCurrent", String.valueOf(mediaPlayer.getCurrentPosition()));
-                        //Log.i("服务的log--getDuration", String.valueOf(mediaPlayer.getDuration()));
                         intent.putExtra("OverMsg", APPMessage.PlayMsg.playtime);
                         intent.setAction("com.demo.ccb.service.PlayService");
                         sendBroadcast(intent);
@@ -79,6 +81,7 @@ public class PlayService extends Service {
 
         path = intent.getStringExtra("url");
         int msg = intent.getIntExtra("MSG", -1);
+        music = intent.getParcelableExtra("music");
         if (msg == APPMessage.PlayMsg.play) {
             play(0);
         } else if (msg == APPMessage.PlayMsg.pause) {
@@ -100,7 +103,9 @@ public class PlayService extends Service {
             net.music = music;
             new Thread(net).start();
         }
-
+        if (music!=null){
+            initLrc();
+        }
         return super.onStartCommand(intent, flags, startId);
     }
 
@@ -257,26 +262,50 @@ public class PlayService extends Service {
     public void initLrc(){
         lrcUtil = new LrcUtil();
 
+        StringBuilder path = new StringBuilder();
+        path.append(MusicAppUtil.checkFileAndFolder() + "lyric/");
+        path.append(music.getMusicTitle());
+        //读取歌词文件
+        if(lrcUtil.readLRC(path.toString())==APPMessage.LrcMsg.LrcReadSuccess){
+            lrcList = lrcUtil.getLrcList();
+            MainActivity.lrcShowViewMain.setmLrcList(lrcList);
+            MainActivity.lrcShowViewMain.setAnimation(AnimationUtils.loadAnimation(PlayService.this, R.anim.alpha_z));
+            handler.post(mRunnable);
+        }else{
+            lrcList = null;
+            MainActivity.lrcShowViewMain.setmLrcList(lrcList);
+            MainActivity.lrcShowViewMain.setAnimation(AnimationUtils.loadAnimation(PlayService.this, R.anim.alpha_z));
+        }
     }
+
+    Runnable mRunnable = new Runnable() {
+        @Override
+        public void run() {
+            MainActivity.lrcShowViewMain.setIndex(lrcIndex());
+            MainActivity.lrcShowViewMain.invalidate();
+            handler.postDelayed(mRunnable,20);
+        }
+    };
 
         //获取歌词索引
     public int lrcIndex() {
+        if (lrcList==null||lrcList.size()<0){
+            return 0;
+        }
         int index = 0;
         if (mediaPlayer.isPlaying()){
             int currentTime = mediaPlayer.getCurrentPosition();
             int duration = mediaPlayer.getDuration();
-            if(currentTime < duration) {
+            if(currentTime <= duration) {
                 for (int i = 0; i < lrcList.size(); i++) {
                     if (i < lrcList.size() - 1) {
-                        if (currentTime < lrcList.get(i).getLrcTime() && i == 0) {
+                        if (currentTime <= lrcList.get(i).getLrcTime() && i == 0) {
+                            index = i;
+                        }else if (currentTime > lrcList.get(i).getLrcTime()
+                                && currentTime <= lrcList.get(i + 1).getLrcTime()) {
                             index = i;
                         }
-                        if (currentTime > lrcList.get(i).getLrcTime()
-                                && currentTime < lrcList.get(i + 1).getLrcTime()) {
-                            index = i;
-                        }
-                    }
-                    if (i == lrcList.size() - 1
+                    }else if (i == lrcList.size() - 1
                             && currentTime > lrcList.get(i).getLrcTime()) {
                         index = i;
                     }

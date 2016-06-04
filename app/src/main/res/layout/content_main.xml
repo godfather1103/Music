@@ -88,7 +88,6 @@
             android:id="@+id/CurrentSongPosition"
             android:layout_width="60dp"
             android:layout_height="60dp"
-
             android:visibility="gone" />
 
         <ImageView
@@ -114,7 +113,7 @@
                 android:focusableInTouchMode="true"
                 android:singleLine="true"
                 android:textColor="#FFFFFF"
-                android:textSize="25sp" />
+                android:textSize="18sp" />
 
             <TextView
                 android:id="@+id/CurrentSongTime"

@@ -20,8 +20,8 @@ public class LrcView extends android.widget.TextView  {
     private float height;       //歌词视图高度
     private Paint currentPaint; //当前画笔对象
     private Paint notCurrentPaint;  //非当前画笔对象
-    private float textHeight = 25;  //文本高度
-    private float textSize = 18;        //文本大小
+    private float textHeight = 40;  //文本高度
+    private float textSize = 35;        //文本大小
     private int index = 0;      //list集合下标
 
     private List<LrcContent> mLrcList = new ArrayList<LrcContent>();
@@ -68,10 +68,10 @@ public class LrcView extends android.widget.TextView  {
             return;
         }
 
-        currentPaint.setColor(Color.argb(210, 251, 248, 29));
+        currentPaint.setColor(Color.argb(210, 34, 255, 0));
         notCurrentPaint.setColor(Color.argb(140, 255, 255, 255));
 
-        currentPaint.setTextSize(24);
+        currentPaint.setTextSize(40);
         currentPaint.setTypeface(Typeface.SERIF);
 
         notCurrentPaint.setTextSize(textSize);

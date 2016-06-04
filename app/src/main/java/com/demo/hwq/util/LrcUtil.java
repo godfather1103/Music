@@ -52,9 +52,11 @@ public class LrcUtil {
                         mLrcContent = new LrcContent();
                         String lyricItem = lyricItems[i];
                         String [] s = lyricItem.split("]");
-                        mLrcContent.setLrcTime(Str2time(s[0]));
-                        mLrcContent.setLrcStr(s[1]);
-                        lrcList.add(mLrcContent);
+                        if (s.length>1){
+                            mLrcContent.setLrcTime(Str2time(s[0]));
+                            mLrcContent.setLrcStr(s[1]);
+                            lrcList.add(mLrcContent);
+                        }
                     }
                 }
         } catch (FileNotFoundException e) {
@@ -68,6 +70,7 @@ public class LrcUtil {
             return APPMessage.LrcMsg.LrcNotFind;
         }finally {
             try {
+                if (br!=null)
                 br.close();
             } catch (IOException e) {
                 Log.e("LrcUtil Exception", e.getMessage());

@@ -7,7 +7,7 @@ import android.os.Parcelable;
  * 音乐的实体类，存放每个音乐文件的信息
  * 
  * */
-public class MusicInfo  implements Parcelable {
+public class MusicInfo  implements Parcelable,Cloneable {
 
 	/*
      * 音乐的
@@ -134,5 +134,9 @@ public class MusicInfo  implements Parcelable {
 		dest.writeLong(MusicSize);
 		dest.writeString(MusicPath);
 		dest.writeString(ico);
+	}
+
+	public Object clone() throws CloneNotSupportedException {
+		return super.clone();
 	}
 }

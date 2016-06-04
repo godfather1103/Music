@@ -144,7 +144,7 @@ public class MusicAppUtil {
         boolean flag;
         String sdcard = MusicAppUtil.checkFileAndFolder();
         try {
-            flag = api.DownLoadLrc(String.valueOf(music.getMusicID()),music.getMusicArtist()+"-"+music.getMusicTitle(),sdcard+"lyric/");
+            flag = api.DownLoadLrc(String.valueOf(music.getMusicID()),music.getMusicTitle(),sdcard+"lyric/");
         } catch (Exception e) {
             Log.e("Exception",e.getMessage());
             flag = false;

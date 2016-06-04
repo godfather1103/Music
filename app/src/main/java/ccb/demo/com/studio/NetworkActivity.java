@@ -82,7 +82,10 @@ public class NetworkActivity extends AppCompatActivity {
 
     //实现下载等待窗口
     private ProgressDialog loading = null;
-    //AlertDialog.Builder loading = new AlertDialog.Builder(NetworkActivity.this);
+    //是否注册了广播接收器
+    boolean isregisterReceiver = false;
+    IntentFilter filter = new IntentFilter();
+    BroadcastReceive rec = new BroadcastReceive();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -100,10 +103,10 @@ public class NetworkActivity extends AppCompatActivity {
             CurrentSong = bundle.getParcelable("CurrentSong");
             MusicList = bundle.getParcelableArrayList("MusicList");
             setCurrentSong(MusicList, position);
+/*            MusicTime = CurrentSong.getMusicTime();
 
-            MusicTime = CurrentSong.getMusicTime();
             String time = MusicTime / 60000 + ":" + (MusicTime % 60000) / 1000;
-            CurrentSongTime.setText(time);
+            CurrentSongTime.setText(time);*/
 
             if (!isPlaying) {
                 PlaySong.setBackgroundResource(R.drawable.play);
@@ -148,6 +151,8 @@ public class NetworkActivity extends AppCompatActivity {
     }
 
     public void back2Main() {
+        if (isregisterReceiver)
+            unregisterReceiver(rec);
         Intent ac2_ac1 = new Intent();
         ac2_ac1.setClass(this, MainActivity.class);
         CurrentSong.setMusicTime(MusicTime);
@@ -167,7 +172,7 @@ public class NetworkActivity extends AppCompatActivity {
     public void setCurrentSong(List<MusicInfo> MusicList, int position) {
         MusicInfo music = MusicList.get(position);
         CurrentSong = music;
-        MusicTime = music.getMusicTime();
+        MusicTime = CurrentSong.getMusicTime();
         String time = MusicTime / 60000 + ":" + (MusicTime % 60000) / 1000;
         CurrentSongTitle.setText(music.getMusicTitle());
         CurrentSongTime.setText(time);
@@ -244,10 +249,13 @@ public class NetworkActivity extends AppCompatActivity {
         Object[] o = (new DBUtil().getCurrentSong());
         isRandom = Integer.valueOf(o[1].toString());
 
-        IntentFilter filter = new IntentFilter();
-        filter.addAction("com.demo.ccb.service.PlayService");
-        registerReceiver(new BroadcastReceive(), filter);
 
+        filter.addAction("com.demo.ccb.service.PlayService");
+
+        if (isregisterReceiver)
+            unregisterReceiver(rec);
+        registerReceiver(rec, filter);
+        isregisterReceiver = true;
     }
 
     //设置歌曲列表
@@ -284,7 +292,7 @@ public class NetworkActivity extends AppCompatActivity {
             int msg = intent.getIntExtra("OverMsg", 0);
 
             if (msg == APPMessage.PlayMsg.playtime) {
-                MusicTime = MusicTime - 1000;
+                MusicTime = MusicTime + 1000;
                 String time = MusicTime / 60000 + ":" + (MusicTime % 60000) / 1000;
                 CurrentSongTime.setText(time);
             }else if (msg==APPMessage.PlayMsg.searchSuccess){
@@ -321,6 +329,7 @@ public class NetworkActivity extends AppCompatActivity {
                 MusicInfo music = MusicList.get(position);
                 intent.putExtra("url", music.getMusicPath());
                 intent.putExtra("MSG", APPMessage.PlayMsg.play);
+                intent.putExtra("music",music);
                 startService(intent);
                 setCurrentSong(MusicList, position);
                 isPlaying=true;

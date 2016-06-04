@@ -168,12 +168,6 @@ public class MainActivity extends AppCompatActivity {
                     }else{
                         sendBroadcast(new Intent(Intent.ACTION_MEDIA_MOUNTED, Uri.parse("file://" + Environment.getExternalStorageDirectory())));
                     }
-                    try {
-                        this.sleep(4000);
-                    } catch (InterruptedException e) {
-                        Log.e("Exception:",e.getMessage());
-                        e.printStackTrace();
-                    }
                     if (!isregisterReceiver){
                         registerReceiver(rec,filter);
                         isregisterReceiver = true;
@@ -183,6 +177,8 @@ public class MainActivity extends AppCompatActivity {
                 }
             }.start();
         } else if (id == R.id.action_openactivity) {
+            if (isregisterReceiver)
+                unregisterReceiver(rec);
             Intent ac1_ac2 = new Intent();
             ac1_ac2.setClass(MainActivity.this, NetworkActivity.class);
             CurrentSong.setMusicTime(MusicTime);
@@ -341,6 +337,7 @@ public class MainActivity extends AppCompatActivity {
             MusicList = MusicAppUtil.getMusicListFromDB(getContentResolver());
             if (MusicList != null) {
                 MusicInfo music = MusicList.get(position);
+                intent.putExtra("music",music);
                 intent.putExtra("url", music.getMusicPath());
                 intent.putExtra("MSG", APPMessage.PlayMsg.play);
 
@@ -430,6 +427,7 @@ public class MainActivity extends AppCompatActivity {
 
                 music = MusicList.get(position);
                 intent.putExtra("url", music.getMusicPath());
+                intent.putExtra("music",music);
                 startService(intent);
                 isFirst = false;
             }
@@ -452,7 +450,7 @@ public class MainActivity extends AppCompatActivity {
                 NextSong.performClick();
             } else if (msg == APPMessage.PlayMsg.playtime) {
                 if (MusicList != null) {
-                    MusicTime = MusicTime - 1000;
+                    MusicTime = MusicTime + 1000;
                     String time = MusicTime / 60000 + ":" + (MusicTime % 60000) / 1000;
                     CurrentSongTime.setText(time);
                 }
@@ -472,7 +470,7 @@ public class MainActivity extends AppCompatActivity {
     public void setCurrentSong(List<MusicInfo> MusicList, int position) {
         MusicInfo music = MusicList.get(position);
         CurrentSong = music;
-        MusicTime = music.getMusicTime();
+        MusicTime = 0;
         String time = MusicTime / 60000 + ":" + (MusicTime % 60000) / 1000;
         CurrentSongTitle.setText(music.getMusicTitle());
         CurrentSongTime.setText(time);
@@ -544,6 +542,10 @@ public class MainActivity extends AppCompatActivity {
                 PlaySong.setBackgroundResource(R.drawable.play);
             }else{
                 PlaySong.setBackgroundResource(R.drawable.pause);
+                if (isregisterReceiver)
+                    unregisterReceiver(rec);
+                registerReceiver(rec, filter);
+                isregisterReceiver = true;
             }
             if (Current != null) {
                 if ("1".equals(Current[1].toString())) {
@@ -602,20 +604,6 @@ public class MainActivity extends AppCompatActivity {
                     lrcShowViewMain.setVisibility(View.VISIBLE);
                     showLrc=true;
                 }
-
-/*                Intent ac1_lrc = new Intent();
-                ac1_lrc.setClass(MainActivity.this, lrc.class);
-                CurrentSong.setMusicTime(MusicTime);
-                int position = Integer.valueOf(CurrentSongPosition.getText().toString());
-                Bundle ac1_lrc_bundle = new Bundle();
-                ac1_lrc_bundle.putInt("position", position);
-                ac1_lrc_bundle.putBoolean("isPause", isPause);
-                ac1_lrc_bundle.putParcelable("CurrentSong", CurrentSong);
-                ac1_lrc_bundle.putBoolean("isFirst", isFirst);
-                ac1_lrc_bundle.putParcelableArrayList("MusicList", (ArrayList<? extends Parcelable>) MusicList);
-                ac1_lrc.putExtras(ac1_lrc_bundle);
-                startActivity(ac1_lrc);
-                MainActivity.this.finish();*/
             }
         });
     }

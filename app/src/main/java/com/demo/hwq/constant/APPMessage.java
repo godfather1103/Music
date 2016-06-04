@@ -31,7 +31,7 @@ public final class APPMessage {
     }
 
     public static final class LrcMsg{
-        public static final int showLrcIndex = 12;
+        public static final int showLrc = 12;
         public static final int LrcNotFind = 13;
         public static final int LrcReadSuccess = 14;
     }
