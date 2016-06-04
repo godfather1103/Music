@@ -553,6 +553,16 @@ public class MainActivity extends AppCompatActivity {
                     PlayState.setBackgroundResource(R.drawable.random);
                 }
             }
+
+
+
+
+            MusicInfo music = MusicList.get(position);
+            intent.putExtra("url", music.getMusicPath());
+            intent.putExtra("music",music);
+            intent.putExtra("MSG", APPMessage.LrcMsg.showLrc);
+            startService(intent);
+
         } catch (Exception e) {
 
             MusicList = MusicAppUtil.getMusicListFromDB(cr);

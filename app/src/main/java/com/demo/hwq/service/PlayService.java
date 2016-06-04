@@ -46,7 +46,6 @@ public class PlayService extends Service {
                 while (thread.isAlive()) {
                     try {
                         Thread.sleep(1000);
-
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
@@ -283,7 +282,7 @@ public class PlayService extends Service {
         public void run() {
             MainActivity.lrcShowViewMain.setIndex(lrcIndex());
             MainActivity.lrcShowViewMain.invalidate();
-            handler.postDelayed(mRunnable,20);
+            handler.postDelayed(mRunnable,40);
         }
     };
 
@@ -299,14 +298,14 @@ public class PlayService extends Service {
             if(currentTime <= duration) {
                 for (int i = 0; i < lrcList.size(); i++) {
                     if (i < lrcList.size() - 1) {
-                        if (currentTime <= lrcList.get(i).getLrcTime() && i == 0) {
+                        if (currentTime < lrcList.get(i).getLrcTime() && i == 0) {
                             index = i;
-                        }else if (currentTime > lrcList.get(i).getLrcTime()
-                                && currentTime <= lrcList.get(i + 1).getLrcTime()) {
+                        }else if (currentTime >= lrcList.get(i).getLrcTime()
+                                && currentTime < lrcList.get(i + 1).getLrcTime()) {
                             index = i;
                         }
                     }else if (i == lrcList.size() - 1
-                            && currentTime > lrcList.get(i).getLrcTime()) {
+                            && currentTime >= lrcList.get(i).getLrcTime()) {
                         index = i;
                     }
                 }

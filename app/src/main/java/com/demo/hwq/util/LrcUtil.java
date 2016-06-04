@@ -82,9 +82,9 @@ public class LrcUtil {
     /**
      * 解析歌词时间
      * 歌词内容格式如下：
-     * [00:02.32]陈奕迅
-     * [00:03.43]好久不见
-     * [00:05.22]歌词制作  王涛
+     * [00:02.032]陈奕迅
+     * [00:03.043]好久不见
+     * [00:05.022]歌词制作  王涛
      * @param Strtime
      * @return
      */
@@ -100,7 +100,7 @@ public class LrcUtil {
         int millisecond = Integer.parseInt(timeData[2]);
 
         //计算上一行与下一行的时间转换为毫秒数
-        int currentTime = (minute * 60 + second) * 1000 + millisecond * 10;
+        int currentTime = (minute * 60 + second) * 1000 + millisecond;
         return currentTime;
     }
 
