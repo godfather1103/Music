@@ -17,6 +17,9 @@ public final class APPMessage {
         public static final int searchSuccess = 6;
         public static final int beginSearch = 7;
         public static final int searchFail = 8;
+        public static final int seekToHead = 15;
+        public static final int seekToBack = 16;
+        public static final int Offset = 5000;//向前/向后前进的步长，单位：毫秒
     }
 
     public static final class APPPath {

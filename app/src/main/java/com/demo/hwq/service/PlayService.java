@@ -10,6 +10,7 @@ import android.os.IBinder;
 import android.os.Message;
 import android.support.annotation.Nullable;
 import android.media.MediaPlayer.OnCompletionListener;
+import android.util.Log;
 import android.view.animation.AnimationUtils;
 
 import com.demo.hwq.constant.APPMessage;
@@ -101,6 +102,14 @@ public class PlayService extends Service {
             net.title = artist + "-" + title;
             net.music = music;
             new Thread(net).start();
+        } else if (msg == APPMessage.PlayMsg.seekToHead && mediaPlayer.isPlaying()) {
+            int currentTime = mediaPlayer.getCurrentPosition();
+            currentTime += APPMessage.PlayMsg.Offset;
+            play(currentTime);
+        } else if (msg == APPMessage.PlayMsg.seekToBack && mediaPlayer.isPlaying()) {
+            int currentTime = mediaPlayer.getCurrentPosition();
+            currentTime -= APPMessage.PlayMsg.Offset;
+            play(currentTime);
         }
         if (music != null) {
             initLrc();
@@ -149,12 +158,12 @@ public class PlayService extends Service {
             try {
                 thread.join();
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                Log.e("Exception", e.getMessage());
             }
             try {
                 mediaPlayer.prepare(); // 在调用stop后如果需要再次通过start进行播放,需要之前调用prepare函数
             } catch (Exception e) {
-                e.printStackTrace();
+                Log.e("Exception", e.getMessage());
             }
         }
     }
@@ -172,8 +181,12 @@ public class PlayService extends Service {
         @Override
         public void onPrepared(MediaPlayer mp) {
             mediaPlayer.start();    //开始播放
-            if (positon > 0) {    //如果音乐不是从头播放
+            if (positon <= 0) {
+                mediaPlayer.seekTo(0);
+            } else if (positon > 0 && positon < mediaPlayer.getDuration()) {    //如果音乐不是从头播放
                 mediaPlayer.seekTo(positon);
+            } else {
+                mediaPlayer.seekTo(mediaPlayer.getDuration());
             }
         }
     }

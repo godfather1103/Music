@@ -97,6 +97,8 @@ public class MainActivity extends AppCompatActivity {
     private Button PlaySong;
     private Button PreviousSong;
     private Button NextSong;
+    private Button seekToHead;
+    private Button seekToBack;
 
     //sd卡的位置
     private String sDir = null;
@@ -179,8 +181,11 @@ public class MainActivity extends AppCompatActivity {
             new Thread() {
                 @Override
                 public void run() {
-                    if (isregisterReceiver)
+                    if (isregisterReceiver) {
                         unregisterReceiver(rec);
+                        isregisterReceiver = false;
+                    }
+
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
                         String sdir = MusicAppUtil.checkFileAndFolder();
                         Set<String> set = MusicAppUtil.showAllFiles(new File(sdir));
@@ -288,91 +293,6 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-/*
-    //检查文件夹和数据库创建情况
-    public void checkFileAndFolder() {
-        String status = Environment.getExternalStorageState();
-
-        if (status.equals(Environment.MEDIA_MOUNTED)) {
-            sDir = APPMessage.APPPath.ExistSD;
-        } else {
-            sDir = APPMessage.APPPath.NoExistSD;
-        }
-        File destDir = new File(sDir);
-        if (!destDir.exists()) {
-            destDir.mkdirs();
-        }
-
-        destDir = new File(sDir + "skin/");
-        if (!destDir.exists()) {
-            destDir.mkdirs();
-        }
-
-        destDir = new File(sDir + "lyric/");
-        if (!destDir.exists()) {
-            destDir.mkdirs();
-        }
-
-        destDir = new File(sDir + "song/");
-        if (!destDir.exists()) {
-            destDir.mkdirs();
-        }
-
-        destDir = new File(sDir + "skin/back.jpg");
-        if (!destDir.exists()) {
-            Bitmap back = BitmapFactory.decodeResource(this.getResources(), R.drawable.back);
-            try {
-                MusicAppUtil.saveBitmapToFile(back, sDir + "skin/back.jpg");
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-
-
-        destDir = new File(APPMessage.APPPath.NoExistSD + "/databases/");
-        if (!destDir.exists()) {
-            destDir.mkdirs();
-        }
-
-        destDir = new File(APPMessage.APPPath.NoExistSD + "/databases/Music.db");
-        if (!destDir.exists()) {
-            //初始化数据库
-            SQLiteDatabase db = SQLiteDatabase.openOrCreateDatabase(
-                    APPMessage.APPPath.NoExistSD + "/databases/Music.db",
-                    null);
-            StringBuilder CurrentSong = new StringBuilder();
-            CurrentSong.append("CREATE TABLE IF NOT EXISTS [CurrentSong] (");
-            CurrentSong.append("  [position] INTEGER NOT NULL DEFAULT 0, ");
-            CurrentSong.append("  [PlayState] VARCHAR NOT NULL DEFAULT 0); ");
-
-            StringBuilder LocalMusicList = new StringBuilder();
-            LocalMusicList.append("CREATE TABLE IF NOT EXISTS [LocalMusicList] (");
-            LocalMusicList.append("  [MusicID] INTEGER NOT NULL, ");
-            LocalMusicList.append("  [MusicTitle] VARCHAR NOT NULL, ");
-            LocalMusicList.append("  [MusicArtist] VARCHAR, ");
-            LocalMusicList.append("  [MusicTime] INTEGER NOT NULL, ");
-            LocalMusicList.append("  [MusicSize] INTEGER NOT NULL, ");
-            LocalMusicList.append("  [MusicPath] VARCHAR NOT NULL, ");
-            LocalMusicList.append("  [Ico] VARCHAR); ");
-
-            StringBuilder NetMusicList = new StringBuilder();
-            NetMusicList.append("CREATE TABLE IF NOT EXISTS [NetMusicList] (");
-            NetMusicList.append("  [MusicID] INTEGER NOT NULL, ");
-            NetMusicList.append("  [MusicTitle] VARCHAR NOT NULL, ");
-            NetMusicList.append("  [MusicArtist] VARCHAR, ");
-            NetMusicList.append("  [MusicTime] INTEGER NOT NULL, ");
-            NetMusicList.append("  [MusicSize] INTEGER NOT NULL, ");
-            NetMusicList.append("  [MusicPath] VARCHAR NOT NULL, ");
-            NetMusicList.append("  [Ico] VARCHAR); ");
-
-            db.execSQL(CurrentSong.toString());
-            db.execSQL(LocalMusicList.toString());
-            db.execSQL(NetMusicList.toString());
-            db.close();
-        }
-    }
-*/
-
     //点击播放列表条目时的监听器
     private class MusicListItemClickListener implements OnItemClickListener {
         @Override
@@ -417,6 +337,26 @@ public class MainActivity extends AppCompatActivity {
                 } else {
                     PlayState.setText("1");
                     PlayState.setBackgroundResource(R.drawable.random);
+                }
+            } else if (id == R.id.seekToHead || id == R.id.seekToBack) {
+                if (!isPause) {
+                    if (id == R.id.seekToHead) {
+                        intent.putExtra("MSG", APPMessage.PlayMsg.seekToHead);
+                        MusicTime = MusicTime + APPMessage.PlayMsg.Offset;
+                    } else if (id == R.id.seekToBack) {
+                        intent.putExtra("MSG", APPMessage.PlayMsg.seekToBack);
+                        MusicTime = MusicTime - APPMessage.PlayMsg.Offset;
+                        MusicTime = MusicTime > 0 ? MusicTime : 0;
+                    }
+
+                    if (MusicList != null) {
+                        String time = MusicTime / 60000 + ":" + (MusicTime % 60000) / 1000;
+                        CurrentSongTime.setText(time);
+                        music = MusicList.get(position);
+                        intent.putExtra("url", music.getMusicPath());
+                        intent.putExtra("music", music);
+                        startService(intent);
+                    }
                 }
             } else {
                 if (id == R.id.PlaySong) {
@@ -467,7 +407,6 @@ public class MainActivity extends AppCompatActivity {
                     registerReceiver(rec, filter);
                     isregisterReceiver = true;
                 }
-
                 music = MusicList.get(position);
                 intent.putExtra("url", music.getMusicPath());
                 intent.putExtra("music", music);
@@ -565,6 +504,9 @@ public class MainActivity extends AppCompatActivity {
         PlaySong = (Button) findViewById(R.id.PlaySong);
         PreviousSong = (Button) findViewById(R.id.PreviousSong);
         NextSong = (Button) findViewById(R.id.NextSong);
+        seekToHead = (Button) findViewById(R.id.seekToHead);
+        seekToBack = (Button) findViewById(R.id.seekToBack);
+
         MusicItem = (ViewGroup) findViewById(R.id.MusicItem);
         lrcShowViewMain = (LrcView) findViewById(R.id.lrcShowViewMain);
         MusiclistView = (ListView) findViewById(R.id.MusicList);
@@ -644,10 +586,14 @@ public class MainActivity extends AppCompatActivity {
         PlaySong.setOnClickListener(new PlayButtonOnClick());
         PreviousSong.setOnClickListener(new PlayButtonOnClick());
         NextSong.setOnClickListener(new PlayButtonOnClick());
+        seekToHead.setOnClickListener(new PlayButtonOnClick());
+        seekToBack.setOnClickListener(new PlayButtonOnClick());
+
+
         filter.addAction("com.demo.ccb.service.PlayService");
 
 
-        //音乐栏目的点击事件
+        //当前音乐栏目的点击事件
         MusicItem.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -662,6 +608,23 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+
+        //歌词显示页面的点击事件
+        lrcShowViewMain.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (showLrc) {
+                    MusiclistView.setVisibility(View.VISIBLE);
+                    lrcShowViewMain.setVisibility(View.GONE);
+                    showLrc = false;
+                } else {
+                    MusiclistView.setVisibility(View.GONE);
+                    lrcShowViewMain.setVisibility(View.VISIBLE);
+                    showLrc = true;
+                }
+            }
+        });
+
     }
 
 }
