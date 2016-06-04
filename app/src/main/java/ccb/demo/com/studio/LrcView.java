@@ -15,16 +15,16 @@ import java.util.List;
 /**
  * Created by godfa on 2016/6/3.
  */
-public class LrcView extends android.widget.TextView  {
+public class LrcView extends android.widget.TextView {
     private float width;        //歌词视图宽度
     private float height;       //歌词视图高度
     private Paint currentPaint; //当前画笔对象
     private Paint notCurrentPaint;  //非当前画笔对象
-    private float textHeight = 40;  //文本高度
-    private float textSize = 35;        //文本大小
+    private final float textHeight = 40;  //文本高度
+    private final float textSize = 35;        //文本大小
     private int index = 0;      //list集合下标
 
-    private List<LrcContent> mLrcList = new ArrayList<LrcContent>();
+    private List<LrcContent> mLrcList = new ArrayList<>();
 
     public void setmLrcList(List<LrcContent> mLrcList) {
         this.mLrcList = mLrcList;
@@ -34,6 +34,7 @@ public class LrcView extends android.widget.TextView  {
         super(context);
         init();
     }
+
     public LrcView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
         init();
@@ -64,7 +65,7 @@ public class LrcView extends android.widget.TextView  {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        if(canvas == null) {
+        if (canvas == null) {
             return;
         }
 
@@ -83,14 +84,14 @@ public class LrcView extends android.widget.TextView  {
 
             float tempY = height / 2;
             //画出本句之前的句子
-            for(int i = index - 1; i >= 0; i--) {
+            for (int i = index - 1; i >= 0; i--) {
                 //向上推移
                 tempY = tempY - textHeight;
                 canvas.drawText(mLrcList.get(i).getLrcStr(), width / 2, tempY, notCurrentPaint);
             }
             tempY = height / 2;
             //画出本句之后的句子
-            for(int i = index + 1; i < mLrcList.size(); i++) {
+            for (int i = index + 1; i < mLrcList.size(); i++) {
                 //往下推移
                 tempY = tempY + textHeight;
                 canvas.drawText(mLrcList.get(i).getLrcStr(), width / 2, tempY, notCurrentPaint);

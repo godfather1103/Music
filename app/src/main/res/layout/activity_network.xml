@@ -24,27 +24,24 @@
     </android.support.design.widget.AppBarLayout>
 
 
-
-
     <EditText
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:id="@+id/input_key"
         android:singleLine="true"
         android:imeOptions="actionSearch"
-        android:textColor="#FFFFFF"/>
+        android:textColor="#FFFFFF" />
 
     <ListView
         android:layout_width="match_parent"
         android:layout_height="448dp"
         android:id="@+id/MusicList"
         android:layout_gravity="center_horizontal"
-        android:textColor="#FFFFFF"/>
+        android:textColor="#FFFFFF" />
 
     <AbsoluteLayout
         android:layout_width="match_parent"
-        android:layout_height="60dp"
-        >
+        android:layout_height="60dp">
 
         <TextView
             android:id="@+id/CurrentSongPosition"
@@ -52,8 +49,7 @@
             android:layout_height="60dp"
 
             android:visibility="gone"
-            android:textColor="#FFFFFF"
-            />
+            android:textColor="#FFFFFF" />
 
         <ImageView
             android:id="@+id/CurrentSongIco"

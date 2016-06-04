@@ -3,19 +3,19 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:context="ccb.demo.com.studio.MainActivity">
 
-    <item android:id="@+id/action_find"
+    <item
+        android:id="@+id/action_find"
         android:orderInCategory="1"
-        android:title="@string/action_find"
-        />
+        android:title="@string/action_find" />
     <item
         android:id="@+id/action_settings"
         android:orderInCategory="2"
         android:title="@string/action_settings"
         app:showAsAction="never" />
-    <item android:id="@+id/action_openactivity"
+    <item
+        android:id="@+id/action_openactivity"
         android:orderInCategory="3"
-        android:title="@string/action_open"
-        />
+        android:title="@string/action_open" />
     <item
         android:id="@+id/action_exit"
         android:orderInCategory="4"

@@ -22,56 +22,60 @@ import java.util.List;
  * 歌词处理的工具类
  */
 public class LrcUtil {
-    private List<LrcContent> lrcList; //List集合存放歌词内容对象
+    private final List<LrcContent> lrcList; //List集合存放歌词内容对象
     private LrcContent mLrcContent;     //声明一个歌词内容对象
+
     /**
      * 无参构造函数用来实例化对象
      */
     public LrcUtil() {
-        lrcList = new ArrayList<LrcContent>();
+        lrcList = new ArrayList<>();
     }
 
 
     /**
      * 读取歌词
+     *
      * @param path
      * @return
      */
-    public int readLRC(String path){
+    public int readLRC(String path) {
         File f = new File(path);
         BufferedReader br = null;
         try {
-                br = new BufferedReader(new FileReader(f));
-                String line = "";
-                if ((line=br.readLine())!=null){
-                    JSONObject lrcFile = new JSONObject(line);
-                    JSONObject lrc = lrcFile.getJSONObject("lrc");
-                    String lyric = lrc.getString("lyric").replace("[","");
-                    String[] lyricItems = lyric.split("\n");
-                    for (int i = 0;i<lyricItems.length;i++){
-                        mLrcContent = new LrcContent();
-                        String lyricItem = lyricItems[i];
-                        String [] s = lyricItem.split("]");
-                        if (s.length>1){
-                            mLrcContent.setLrcTime(Str2time(s[0]));
-                            mLrcContent.setLrcStr(s[1]);
-                            lrcList.add(mLrcContent);
-                        }
+            br = new BufferedReader(new FileReader(f));
+            String line = "";
+            if ((line = br.readLine()) != null) {
+                JSONObject lrcFile = new JSONObject(line);
+                JSONObject lrc = lrcFile.getJSONObject("lrc");
+                String lyric = lrc.getString("lyric").replace("[", "");
+                String[] lyricItems = lyric.split("\n");
+                for (String lyricItem : lyricItems) {
+                    mLrcContent = new LrcContent();
+                    String[] s = lyricItem.split("]");
+                    if (s.length > 1) {
+                        mLrcContent.setLrcTime(Str2time(s[0]));
+                        mLrcContent.setLrcStr(s[1]);
+                        lrcList.add(mLrcContent);
                     }
                 }
+/*                for (int i = 0; i < lyricItems.length; i++) {
+                    String lyricItem = lyricItems[i];
+                }*/
+            }
         } catch (FileNotFoundException e) {
-                Log.e("LrcUtil Exception", e.getMessage());
-                return APPMessage.LrcMsg.LrcNotFind;
-            } catch (IOException e) {
-                Log.e("LrcUtil Exception", e.getMessage());
-                return APPMessage.LrcMsg.LrcNotFind;
+            Log.e("LrcUtil Exception", e.getMessage());
+            return APPMessage.LrcMsg.LrcNotFind;
+        } catch (IOException e) {
+            Log.e("LrcUtil Exception", e.getMessage());
+            return APPMessage.LrcMsg.LrcNotFind;
         } catch (JSONException e) {
             Log.e("LrcUtil Exception", e.getMessage());
             return APPMessage.LrcMsg.LrcNotFind;
-        }finally {
+        } finally {
             try {
-                if (br!=null)
-                br.close();
+                if (br != null)
+                    br.close();
             } catch (IOException e) {
                 Log.e("LrcUtil Exception", e.getMessage());
             }
@@ -85,6 +89,7 @@ public class LrcUtil {
      * [00:02.032]陈奕迅
      * [00:03.043]好久不见
      * [00:05.022]歌词制作  王涛
+     *
      * @param Strtime
      * @return
      */
@@ -100,8 +105,7 @@ public class LrcUtil {
         int millisecond = Integer.parseInt(timeData[2]);
 
         //计算上一行与下一行的时间转换为毫秒数
-        int currentTime = (minute * 60 + second) * 1000 + millisecond;
-        return currentTime;
+        return (minute * 60 + second) * 1000 + millisecond;
     }
 
 

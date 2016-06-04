@@ -20,13 +20,13 @@ import java.io.IOException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Created by godfa on 2016/5/27.
  */
 public class testSomething extends AndroidTestCase {
 
-    @Test
     public void testDownload() throws Exception {
 /*        List<MusicInfo> list = new DBUtil().getMusicListInNetTable();
         MusicInfo musicInfo = list.get(0);
@@ -37,15 +37,15 @@ public class testSomething extends AndroidTestCase {
         String sdcard = MusicAppUtil.checkFileAndFolder();
         Log.i("我的测试消息", sdcard);
         API api = new API();
-        String res = api.rawHttpRequest("GET",url,null);
+        String res = api.rawHttpRequest("GET", url, null);
         Log.i("我的测试消息", res);
-        File f = new File(sdcard+"a.gc");
-        if (f.exists()){
+        File f = new File(sdcard + "a.gc");
+        if (f.exists()) {
             f.delete();
         }
         BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(f));
         byte[] bytes = res.getBytes();
-        bos.write(bytes,0,bytes.length);
+        bos.write(bytes, 0, bytes.length);
         bos.flush();
         bos.close();
         //DownLoad(url, "a.jpg", sdcard);
@@ -62,19 +62,20 @@ public class testSomething extends AndroidTestCase {
         conn.setRequestProperty("User-Agent", "Mozilla/4.0 (compatible; MSIE 5.0; Windows NT; DigExt)");
 
         //得到输入流
-        BufferedInputStream bis = new BufferedInputStream(conn.getInputStream());;// 定义一个带缓冲的输入流 。
+        BufferedInputStream bis = new BufferedInputStream(conn.getInputStream());
+        // 定义一个带缓冲的输入流 。
 
         //得到输出流
         File f = new File(savePath + fileName);
-        if (f.exists()){
+        if (f.exists()) {
             f.delete();
         }
         BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(f)); // 定义一个带缓冲的输出流。
 
-        byte[] buffer = new byte[4*1024];
-        int len=-1;
-        while((len = bis.read(buffer)) != -1) {
-            bos.write(buffer,0,len);
+        byte[] buffer = new byte[4 * 1024];
+        int len = -1;
+        while ((len = bis.read(buffer)) != -1) {
+            bos.write(buffer, 0, len);
         }
         bos.flush();
         //bis.close();
@@ -83,4 +84,16 @@ public class testSomething extends AndroidTestCase {
         if (bos != null)
             bos.close();
     }
+
+    @Test
+    public void testScanFile() {
+        String sdir = MusicAppUtil.checkFileAndFolder();
+        Log.i("单元测试Log", sdir);
+        Set<String> set = MusicAppUtil.showAllFiles(new File(sdir));
+        for (String a :
+                set) {
+            Log.i("单元测试Log", a);
+        }
+    }
+
 }

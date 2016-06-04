@@ -28,15 +28,13 @@ public class DBUtil {
         return sqlite;
     }
 
-    public boolean insertCurrentSong(int position, String PlayState) {
-        boolean flag = false;
+    public void insertCurrentSong(int position, String PlayState) {
         if (sqlite != null) {
             sqlite.execSQL("delete from CurrentSong;");
             sqlite.execSQL("insert into CurrentSong(position,PlayState) values(?,?);", new Object[]{position, PlayState});
             close();
-            flag = true;
+            //flag = true;
         }
-        return flag;
     }
 
     public Object[] getCurrentSong() {
@@ -60,7 +58,7 @@ public class DBUtil {
 
     //从数据库中获取本地歌曲列表
     public List<MusicInfo> getMusicList() {
-        List<MusicInfo> MusicList = new ArrayList<MusicInfo>();
+        List<MusicInfo> MusicList = new ArrayList<>();
         if (sqlite != null) {
 
             Cursor cr = sqlite.rawQuery("select * from LocalMusicList;", new String[]{});
@@ -128,7 +126,7 @@ public class DBUtil {
                 "MusicPath=?," +
                 "ico=? " +
                 "where MusicID=?";
-        Log.i("sql",sql);
+        Log.i("sql", sql);
         sqlite.execSQL(sql,
                 new Object[]{
                         music.getMusicTitle(),
@@ -191,7 +189,7 @@ public class DBUtil {
     public List<MusicInfo> getMusicListInNetTable() {
         List<MusicInfo> MusicList = null;
         if (sqlite != null) {
-            MusicList = new ArrayList<MusicInfo>();
+            MusicList = new ArrayList<>();
             Cursor cr = sqlite.rawQuery("select * from NetMusicList;", new String[]{});
             while (cr.moveToNext()) {
                 MusicInfo music = new MusicInfo();

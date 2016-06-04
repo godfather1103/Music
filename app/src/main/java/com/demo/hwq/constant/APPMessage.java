@@ -19,18 +19,18 @@ public final class APPMessage {
         public static final int searchFail = 8;
     }
 
-    public static final class APPPath{
+    public static final class APPPath {
         public static final String ExistSD = Environment.getExternalStorageDirectory().getPath() + "/MusicApp/";
-        public static final String NoExistSD ="/data/data/ccb.demo.com.studio/";
+        public static final String NoExistSD = "/data/data/ccb.demo.com.studio/";
     }
 
-    public static final class NetPlayMsg{
+    public static final class NetPlayMsg {
         public static final int download = 9;
         public static final int downloadSuccess = 10;
         public static final int downloadFail = 11;
     }
 
-    public static final class LrcMsg{
+    public static final class LrcMsg {
         public static final int showLrc = 12;
         public static final int LrcNotFind = 13;
         public static final int LrcReadSuccess = 14;

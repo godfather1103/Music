@@ -55,24 +55,22 @@
         android:layout_height="410dp"
         android:layout_x="0dp"
         android:layout_y="54dp"
-        android:orientation="horizontal"
-        >
+        android:orientation="horizontal">
 
         <ListView
             android:id="@+id/MusicList"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_alignParentTop="true"
-            android:layout_centerHorizontal="true"
-            />
+            android:layout_centerHorizontal="true" />
+
         <ccb.demo.com.studio.LrcView
             android:id="@+id/lrcShowViewMain"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_centerHorizontal="true"
             android:visibility="gone"
-            android:textColor="#FFFFFF"
-            />
+            android:textColor="#FFFFFF" />
 
 
     </LinearLayout>

@@ -31,13 +31,12 @@ import java.util.List;
  * Created by godfa on 2016/3/20.
  * 该API使用的是网易云音乐的web API
  * 由https://github.com/darknessomi/musicbox中相应的脚本改写而来
- *wiki:https://github.com/darknessomi/musicbox/wiki
- *
+ * wiki:https://github.com/darknessomi/musicbox/wiki
  */
 public class API {
 
     //private HttpURLConnection connection = null;
-    private ArrayList<NameValuePair> headerList = new ArrayList<NameValuePair>();
+    private final ArrayList<NameValuePair> headerList = new ArrayList<>();
     //   private ArrayList<NameValuePair> cookies = new ArrayList<NameValuePair>();
 //    int default_timeout = 10;
 //    String modulus = "00e0b509f6259df8642dbc35662901477df22677ec152b5ff68ace615bb7b725152b3ab17a876aea8a5aa76d2e417629ec4ee341f56135fccf695280104e0312ecbda92557c93870114af6c9d05c4f7f0c3685b7a46bee255932575cce10b424d813cfe4875d3e82047b97ddef52741d546b8e289dc6935b3ece0462db0a22b8e7";
@@ -76,7 +75,7 @@ public class API {
     public JSONObject search(String s, int type, int offset, String total, int limit) throws Exception {
 
         String action = "http://music.163.com/api/search/get";
-        List<NameValuePair> data = new ArrayList<NameValuePair>();
+        List<NameValuePair> data = new ArrayList<>();
 
         data.add(new BasicNameValuePair("s", s));
         data.add(new BasicNameValuePair("type", "" + type));
@@ -123,13 +122,13 @@ public class API {
             httpResponse = httpClient.execute(connection);
         }
         if (httpResponse != null && httpResponse.getStatusLine().getStatusCode() == 200) {
-            result = EntityUtils.toString(httpResponse.getEntity(),"UTF-8");
+            result = EntityUtils.toString(httpResponse.getEntity(), "UTF-8");
         }
         return result;
     }
 
     //获取歌曲的详细信息从music_id
-    public String song_detail(long music_id){
+    public String song_detail(long music_id) {
         String mp3Url;
         JSONObject data;
         JSONArray songs;
@@ -137,7 +136,7 @@ public class API {
         try {
             data = this.httpRequest("GET", action, null);
             songs = data.getJSONArray("songs");
-            mp3Url = ((JSONObject)songs.get(0)).getString("mp3Url");
+            mp3Url = ((JSONObject) songs.get(0)).getString("mp3Url");
         } catch (Exception e) {
             // TODO Auto-generated catch block
             mp3Url = null;
@@ -147,7 +146,7 @@ public class API {
     }
 
     //从网络上下载文件
-    public boolean DownLoad(String urlStr, String fileName, String savePath) throws IOException {
+    public void DownLoad(String urlStr, String fileName, String savePath) throws IOException {
 
         URL url = new URL(urlStr);
         URLConnection conn = url.openConnection();
@@ -163,19 +162,20 @@ public class API {
                 "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.152 Safari/537.36");
 
         //得到输入流
-        BufferedInputStream bis = new BufferedInputStream(conn.getInputStream());;// 定义一个带缓冲的输入流 。
+        BufferedInputStream bis = new BufferedInputStream(conn.getInputStream());
+        // 定义一个带缓冲的输入流 。
 
         //得到输出流
         File f = new File(savePath + fileName);
-        if (f.exists()){
+        if (f.exists()) {
             f.delete();
         }
         BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(f)); // 定义一个带缓冲的输出流。
 
-        byte[] buffer = new byte[4*1024];
-        int len=-1;
-        while((len = bis.read(buffer)) != -1) {
-            bos.write(buffer,0,len);
+        byte[] buffer = new byte[4 * 1024];
+        int len = -1;
+        while ((len = bis.read(buffer)) != -1) {
+            bos.write(buffer, 0, len);
         }
         bos.flush();
         if (bis != null)
@@ -183,25 +183,25 @@ public class API {
         if (bos != null)
             bos.close();
 
-        return true;
+        //return true;
     }
 
     //从网络上下载歌词
-    public boolean DownLoadLrc(String musicid,String fileName, String savePath) throws Exception {
+    public void DownLoadLrc(String musicid, String fileName, String savePath) throws Exception {
         String url = "http://music.163.com/api/song/lyric?os=osx&id=$$&lv=-1&kv=-1&tv=-1";
-        url = url.replace("$$",musicid);
+        url = url.replace("$$", musicid);
         String res = rawHttpRequest("GET", url, null);
         Log.i("下载歌词", res);
         File f = new File(savePath + fileName);
         Log.i("下载歌词", savePath + fileName);
-        if (f.exists()){
+        if (f.exists()) {
             f.delete();
         }
         BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(f));
         byte[] bytes = res.getBytes();
-        bos.write(bytes,0,bytes.length);
+        bos.write(bytes, 0, bytes.length);
         bos.flush();
         bos.close();
-        return true;
+        //return true;
     }
 }

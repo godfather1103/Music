@@ -2,6 +2,7 @@ package ccb.demo.com.studio;
 
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -10,6 +11,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
@@ -49,43 +51,44 @@ import java.util.List;
  */
 public class NetworkActivity extends AppCompatActivity {
     NetworkActivity activity = this;
-    List<MusicInfo> MusicList;
-    ListView MusiclistView;
-    final Intent intent = new Intent();
-    ContentResolver cr;
+    private List<MusicInfo> MusicList;
+    private ListView MusiclistView;
+    private final Intent intent = new Intent();
+    private ContentResolver cr;
     //是否第一次播放
     private boolean isFirst;
 
-    EditText input_key;
+    private EditText input_key;
 
     //音乐还剩的播放时间
-    long MusicTime;
+    private long MusicTime;
 
     //当前播放的歌曲信息
-    TextView CurrentSongTitle;
-    TextView CurrentSongTime;
-    TextView CurrentSongPosition;
-    ImageView CurrentSongIco;
+    private TextView CurrentSongTitle;
+    private TextView CurrentSongTime;
+    private TextView CurrentSongPosition;
+    private ImageView CurrentSongIco;
 
 
     //当前播放的歌曲
-    MusicInfo CurrentSong;
+    private MusicInfo CurrentSong;
 
     //播放按钮
-    Button PlaySong;
-    boolean isPlaying = false;
-
-    String sDir = null;
+    private Button PlaySong;
+    private boolean isPlaying = false;
 
     //是否是随机播放
-    int isRandom = 0;
+    private int isRandom = 0;
 
     //实现下载等待窗口
     private ProgressDialog loading = null;
     //是否注册了广播接收器
-    boolean isregisterReceiver = false;
-    IntentFilter filter = new IntentFilter();
-    BroadcastReceive rec = new BroadcastReceive();
+    private boolean isregisterReceiver = false;
+    private final IntentFilter filter = new IntentFilter();
+    private final BroadcastReceive rec = new BroadcastReceive();
+
+    //用于控制音量
+    private AudioManager audioManager = null; //音频
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -146,11 +149,19 @@ public class NetworkActivity extends AppCompatActivity {
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0) {
             back2Main();
+        } else if (keyCode == KeyEvent.KEYCODE_VOLUME_UP) {
+            audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC,
+                    AudioManager.ADJUST_RAISE,
+                    AudioManager.FLAG_SHOW_UI);  //调高声音
+        } else if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN) {
+            audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC,
+                    AudioManager.ADJUST_LOWER,
+                    AudioManager.FLAG_SHOW_UI);//调低声音
         }
         return true;
     }
 
-    public void back2Main() {
+    private void back2Main() {
         if (isregisterReceiver)
             unregisterReceiver(rec);
         Intent ac2_ac1 = new Intent();
@@ -169,7 +180,7 @@ public class NetworkActivity extends AppCompatActivity {
     }
 
     //设置当前歌曲状态
-    public void setCurrentSong(List<MusicInfo> MusicList, int position) {
+    private void setCurrentSong(List<MusicInfo> MusicList, int position) {
         MusicInfo music = MusicList.get(position);
         CurrentSong = music;
         MusicTime = CurrentSong.getMusicTime();
@@ -210,7 +221,8 @@ public class NetworkActivity extends AppCompatActivity {
     }
 
     //初始化各个组件
-    public void init() {
+    private void init() {
+        audioManager = (AudioManager) getSystemService(Service.AUDIO_SERVICE);
 
         CurrentSongTitle = (TextView) findViewById(R.id.CurrentSongTitle);
         CurrentSongTime = (TextView) findViewById(R.id.CurrentSongTime);
@@ -232,12 +244,12 @@ public class NetworkActivity extends AppCompatActivity {
                     if (key.length() <= 0) {
                         Toast.makeText(getApplicationContext(), "输入不能为空", Toast.LENGTH_SHORT).show();
                     } else {
-                        if (loading!=null){
+                        if (loading != null) {
                             loading.dismiss();
                         }
                         intent.putExtra("key", key);
                         intent.putExtra("MSG", APPMessage.PlayMsg.beginSearch);
-                        loading = ProgressDialog.show(NetworkActivity.this,"搜索","正在搜索...");
+                        loading = ProgressDialog.show(NetworkActivity.this, "搜索", "正在搜索...");
                         startService(intent);
                     }
                     return true;
@@ -259,18 +271,18 @@ public class NetworkActivity extends AppCompatActivity {
     }
 
     //设置歌曲列表
-    public void setListAdpter(List<MusicInfo> MusicList) {
-        List<HashMap<String, String>> Mp3List = new ArrayList<HashMap<String, String>>();
+    private void setListAdpter(List<MusicInfo> MusicList) {
+        List<HashMap<String, String>> Mp3List = new ArrayList<>();
         for (MusicInfo music : MusicList) {
             long songtime = music.getMusicTime();
             String time = songtime / 60000 + ":" + (songtime % 60000) / 1000;
-            HashMap<String, String> map = new HashMap<String, String>();
+            HashMap<String, String> map = new HashMap<>();
             map.put("title", music.getMusicTitle());
             map.put("artist", music.getMusicArtist());
             map.put("duration", time);
             map.put("size", String.valueOf(music.getMusicSize()));
             map.put("url", music.getMusicPath());
-            map.put("ID",String.valueOf(music.getMusicID()));
+            map.put("ID", String.valueOf(music.getMusicID()));
             Mp3List.add(map);
         }
 
@@ -295,25 +307,25 @@ public class NetworkActivity extends AppCompatActivity {
                 MusicTime = MusicTime + 1000;
                 String time = MusicTime / 60000 + ":" + (MusicTime % 60000) / 1000;
                 CurrentSongTime.setText(time);
-            }else if (msg==APPMessage.PlayMsg.searchSuccess){
+            } else if (msg == APPMessage.PlayMsg.searchSuccess) {
                 loading.cancel();
                 stopService(intent);
                 MusicList = new DBUtil().getMusicListInNetTable();
                 setListAdpter(MusicList);
-            }else if(msg==APPMessage.PlayMsg.searchFail){
+            } else if (msg == APPMessage.PlayMsg.searchFail) {
                 loading.dismiss();
                 Toast.makeText(getApplicationContext(),
                         "没有查找到相应歌曲信息请重新输入搜索关键词",
                         Toast.LENGTH_LONG).show();
-            }else if (msg==APPMessage.NetPlayMsg.downloadSuccess){
+            } else if (msg == APPMessage.NetPlayMsg.downloadSuccess) {
                 String title = intent.getStringExtra("title");
                 Toast.makeText(getApplicationContext(),
                         "歌曲下载成功，请重新扫描本地音乐",
                         Toast.LENGTH_SHORT).show();
-                        Intent scanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
-                        scanIntent.setData(Uri.fromFile(new File(MusicAppUtil.checkFileAndFolder()+"song/"+title)));
-                        sendBroadcast(scanIntent);
-            }else if (msg==APPMessage.NetPlayMsg.downloadFail){
+                Intent scanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+                scanIntent.setData(Uri.fromFile(new File(MusicAppUtil.checkFileAndFolder() + "song/" + title)));
+                sendBroadcast(scanIntent);
+            } else if (msg == APPMessage.NetPlayMsg.downloadFail) {
                 Toast.makeText(getApplicationContext(),
                         "歌曲下载失败！",
                         Toast.LENGTH_LONG).show();
@@ -329,10 +341,10 @@ public class NetworkActivity extends AppCompatActivity {
                 MusicInfo music = MusicList.get(position);
                 intent.putExtra("url", music.getMusicPath());
                 intent.putExtra("MSG", APPMessage.PlayMsg.play);
-                intent.putExtra("music",music);
+                intent.putExtra("music", music);
                 startService(intent);
                 setCurrentSong(MusicList, position);
-                isPlaying=true;
+                isPlaying = true;
                 isFirst = false;
                 PlaySong.setBackgroundResource(R.drawable.pause);
             }
@@ -340,7 +352,8 @@ public class NetworkActivity extends AppCompatActivity {
     }
 
     //长按播放条目时的监听器
-    public int p;//记录下载的歌曲的位置
+    private int p;//记录下载的歌曲的位置
+
     private class MusicListItemLongClickListenter implements AdapterView.OnItemLongClickListener {
 
         @Override
@@ -356,9 +369,9 @@ public class NetworkActivity extends AppCompatActivity {
                     if (MusicList != null) {
                         MusicInfo music = MusicList.get(p);
                         intent.putExtra("url", music.getMusicPath());
-                        intent.putExtra("title",music.getMusicTitle());
-                        intent.putExtra("artist",music.getMusicArtist());
-                        intent.putExtra("music",music);
+                        intent.putExtra("title", music.getMusicTitle());
+                        intent.putExtra("artist", music.getMusicArtist());
+                        intent.putExtra("music", music);
                         intent.putExtra("MSG", APPMessage.NetPlayMsg.download);
                         startService(intent);
                         Toast.makeText(getApplicationContext(),
@@ -379,7 +392,6 @@ public class NetworkActivity extends AppCompatActivity {
     }
 
 
-
     //播放按钮的监听器
     private class PlayButtonOnClick implements View.OnClickListener {
 
@@ -391,27 +403,27 @@ public class NetworkActivity extends AppCompatActivity {
             if (CurrentSongPosition == null)
                 return;
             int position = Integer.valueOf(CurrentSongPosition.getText().toString());
-                if (id == R.id.PlayControl) {
-                    if (isFirst) {
-                        intent.putExtra("MSG", APPMessage.PlayMsg.play);
+            if (id == R.id.PlayControl) {
+                if (isFirst) {
+                    intent.putExtra("MSG", APPMessage.PlayMsg.play);
+                    PlaySong.setBackgroundResource(R.drawable.pause);
+                    isPlaying = true;
+                } else {
+                    if (!isPlaying) {
+                        intent.putExtra("MSG", APPMessage.PlayMsg.replay);
                         PlaySong.setBackgroundResource(R.drawable.pause);
                         isPlaying = true;
                     } else {
-                        if (!isPlaying) {
-                            intent.putExtra("MSG", APPMessage.PlayMsg.replay);
-                            PlaySong.setBackgroundResource(R.drawable.pause);
-                            isPlaying = true;
-                        } else {
-                            intent.putExtra("MSG", APPMessage.PlayMsg.pause);
-                            PlaySong.setBackgroundResource(R.drawable.play);
-                            isPlaying = false;
-                        }
+                        intent.putExtra("MSG", APPMessage.PlayMsg.pause);
+                        PlaySong.setBackgroundResource(R.drawable.play);
+                        isPlaying = false;
                     }
                 }
-                music = MusicList.get(position);
-                intent.putExtra("url", music.getMusicPath());
-                startService(intent);
-                isFirst = false;
+            }
+            music = MusicList.get(position);
+            intent.putExtra("url", music.getMusicPath());
+            startService(intent);
+            isFirst = false;
 
         }
 

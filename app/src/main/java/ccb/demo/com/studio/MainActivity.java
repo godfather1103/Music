@@ -2,6 +2,7 @@ package ccb.demo.com.studio;
 
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -11,6 +12,7 @@ import android.content.IntentFilter;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.media.AudioManager;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Build;
@@ -43,6 +45,9 @@ import com.demo.hwq.service.PlayService;
 import com.demo.hwq.util.DBUtil;
 import com.demo.hwq.util.MusicAppUtil;
 import com.demo.hwq.vo.MusicInfo;
+import com.google.android.gms.appindexing.Action;
+import com.google.android.gms.appindexing.AppIndex;
+import com.google.android.gms.common.api.GoogleApiClient;
 
 import java.io.File;
 import java.io.FileDescriptor;
@@ -51,6 +56,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -58,49 +64,52 @@ public class MainActivity extends AppCompatActivity {
 
     private boolean isPause = true;                    //暂停状态
 
-    final Intent intent = new Intent();
+    private final Intent intent;
 
-    ContentResolver cr;
+    private ContentResolver cr;
 
-    List<MusicInfo> MusicList;
+    private List<MusicInfo> MusicList;
 
     //音乐列表view
-    ListView MusiclistView;
+    private ListView MusiclistView;
     //歌词列表view
     public static LrcView lrcShowViewMain;
-    boolean showLrc = false;
+    private boolean showLrc = false;
 
     //音乐当前栏目
-    ViewGroup MusicItem;
+    private ViewGroup MusicItem;
 
     //音乐还剩的播放时间
-    long MusicTime = 0;
+    private long MusicTime = 0;
 
     //当前播放的歌曲
-    MusicInfo CurrentSong = new MusicInfo();
+    private MusicInfo CurrentSong = new MusicInfo();
 
     //当前播放的歌曲信息
-    TextView CurrentSongTitle;
-    TextView CurrentSongTime;
-    TextView CurrentSongPosition;
-    ImageView CurrentSongIco;
+    private TextView CurrentSongTitle;
+    private TextView CurrentSongTime;
+    private TextView CurrentSongPosition;
+    private ImageView CurrentSongIco;
     //是否随机
-    Button PlayState;
+    private Button PlayState;
 
     //上方工具栏的按钮
-    Button PlaySong;
-    Button PreviousSong;
-    Button NextSong;
+    private Button PlaySong;
+    private Button PreviousSong;
+    private Button NextSong;
 
     //sd卡的位置
-    String sDir = null;
+    private String sDir = null;
 
     //是否注册了广播接收器
-    boolean isregisterReceiver = false;
+    private boolean isregisterReceiver = false;
+
+    //用于控制音量
+    private AudioManager audioManager = null; //音频
 
     //长时间加载对话框
-    ProgressDialog loading = null;
-    private Handler handler = new Handler(){
+    private ProgressDialog loading = null;
+    private final Handler handler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
@@ -109,6 +118,15 @@ public class MainActivity extends AppCompatActivity {
             loading.dismiss();
         }
     };
+    /**
+     * ATTENTION: This was auto-generated to implement the App Indexing API.
+     * See https://g.co/AppIndexing/AndroidStudio for more information.
+     */
+    private GoogleApiClient client;
+
+    public MainActivity() {
+        intent = new Intent();
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -123,6 +141,9 @@ public class MainActivity extends AppCompatActivity {
         init();
         setLisnter();
         back2Main();
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
     }
 
     @Override
@@ -150,27 +171,39 @@ public class MainActivity extends AppCompatActivity {
 
         } else if (id == R.id.action_find) {
             MusicList = null;
-            if (loading!=null){
+            if (loading != null) {
                 loading.dismiss();
             }
-            loading = ProgressDialog.show(this,"扫描","正在扫描歌曲中...");
-            new Thread(){
+            loading = ProgressDialog.show(this, "扫描", "正在扫描歌曲中...");
+
+            new Thread() {
                 @Override
                 public void run() {
                     if (isregisterReceiver)
                         unregisterReceiver(rec);
-                    if (Build.VERSION.SDK_INT>=Build.VERSION_CODES.KITKAT){
-                        String ACTION_MEDIA_SCANNER_SCAN_DIR =        "android.intent.action.MEDIA_SCANNER_SCAN_DIR";
-                        Intent scanInt = new Intent(ACTION_MEDIA_SCANNER_SCAN_DIR);
-                        scanInt.setData(Uri.fromFile(Environment.getExternalStorageDirectory()));
-                        sendBroadcast(scanInt);
-
-                    }else{
-                        sendBroadcast(new Intent(Intent.ACTION_MEDIA_MOUNTED, Uri.parse("file://" + Environment.getExternalStorageDirectory())));
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                        String sdir = MusicAppUtil.checkFileAndFolder();
+                        Set<String> set = MusicAppUtil.showAllFiles(new File(sdir));
+                        Intent scanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+                        for (String a :
+                                set) {
+                            if (a.contains(".")) {
+                                Log.i("扫描动作的日志", a);
+                                scanIntent.setData(Uri.fromFile(new File(a)));
+                                sendBroadcast(scanIntent);
+                            }
+                        }
+                    } else {
+                        sendBroadcast(new Intent(Intent.ACTION_MEDIA_MOUNTED, Uri.parse("file://" + Environment.getExternalStorageDirectory() + "/")));
                     }
-                    if (!isregisterReceiver){
-                        registerReceiver(rec,filter);
+                    if (!isregisterReceiver) {
+                        registerReceiver(rec, filter);
                         isregisterReceiver = true;
+                    }
+                    try {
+                        this.sleep(2000);
+                    } catch (InterruptedException e) {
+                        Log.e("Exception", e.getMessage());
                     }
                     MusicList = MusicAppUtil.getMusicListFromSD(cr);
                     handler.sendEmptyMessage(0);
@@ -187,7 +220,7 @@ public class MainActivity extends AppCompatActivity {
             ac1_ac2_bundle.putInt("position", position);
             ac1_ac2_bundle.putBoolean("isPlaying", !isPause);
             ac1_ac2_bundle.putParcelable("CurrentSong", CurrentSong);
-            ac1_ac2_bundle.putBoolean("isFirst",isFirst);
+            ac1_ac2_bundle.putBoolean("isFirst", isFirst);
             ac1_ac2_bundle.putParcelableArrayList("MusicList", (ArrayList<? extends Parcelable>) MusicList);
             ac1_ac2.putExtras(ac1_ac2_bundle);
             startActivity(ac1_ac2);
@@ -218,17 +251,25 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
             builder.create().show();
+        } else if (keyCode == KeyEvent.KEYCODE_VOLUME_UP) {
+            audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC,
+                    AudioManager.ADJUST_RAISE,
+                    AudioManager.FLAG_SHOW_UI);  //调高声音
+        } else if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN) {
+            audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC,
+                    AudioManager.ADJUST_LOWER,
+                    AudioManager.FLAG_SHOW_UI);//调低声音
         }
         return true;
     }
 
     //设置歌曲列表
-    public void setListAdpter(List<MusicInfo> MusicList) {
-        List<HashMap<String, String>> Mp3List = new ArrayList<HashMap<String, String>>();
+    private void setListAdpter(List<MusicInfo> MusicList) {
+        List<HashMap<String, String>> Mp3List = new ArrayList<>();
         for (MusicInfo music : MusicList) {
             long songtime = music.getMusicTime();
             String time = songtime / 60000 + ":" + (songtime % 60000) / 1000;
-            HashMap<String, String> map = new HashMap<String, String>();
+            HashMap<String, String> map = new HashMap<>();
             map.put("title", music.getMusicTitle());
             map.put("artist", music.getMusicArtist());
             map.put("duration", time);
@@ -247,6 +288,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+/*
     //检查文件夹和数据库创建情况
     public void checkFileAndFolder() {
         String status = Environment.getExternalStorageState();
@@ -329,6 +371,7 @@ public class MainActivity extends AppCompatActivity {
             db.close();
         }
     }
+*/
 
     //点击播放列表条目时的监听器
     private class MusicListItemClickListener implements OnItemClickListener {
@@ -337,7 +380,7 @@ public class MainActivity extends AppCompatActivity {
             MusicList = MusicAppUtil.getMusicListFromDB(getContentResolver());
             if (MusicList != null) {
                 MusicInfo music = MusicList.get(position);
-                intent.putExtra("music",music);
+                intent.putExtra("music", music);
                 intent.putExtra("url", music.getMusicPath());
                 intent.putExtra("MSG", APPMessage.PlayMsg.play);
 
@@ -427,7 +470,7 @@ public class MainActivity extends AppCompatActivity {
 
                 music = MusicList.get(position);
                 intent.putExtra("url", music.getMusicPath());
-                intent.putExtra("music",music);
+                intent.putExtra("music", music);
                 startService(intent);
                 isFirst = false;
             }
@@ -454,11 +497,15 @@ public class MainActivity extends AppCompatActivity {
                     String time = MusicTime / 60000 + ":" + (MusicTime % 60000) / 1000;
                     CurrentSongTime.setText(time);
                 }
-            }else if (msg==APPMessage.NetPlayMsg.downloadFail){
+            } else if (msg == APPMessage.NetPlayMsg.downloadFail) {
                 Toast.makeText(getApplicationContext(),
                         "歌曲下载失败！",
                         Toast.LENGTH_LONG).show();
-            }else if (msg==APPMessage.NetPlayMsg.downloadSuccess){
+            } else if (msg == APPMessage.NetPlayMsg.downloadSuccess) {
+                String title = intent.getStringExtra("title");
+                Intent scanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+                scanIntent.setData(Uri.fromFile(new File(MusicAppUtil.checkFileAndFolder() + "song/" + title)));
+                sendBroadcast(scanIntent);
                 Toast.makeText(getApplicationContext(),
                         "歌曲下载成功，请重新扫描本地音乐",
                         Toast.LENGTH_SHORT).show();
@@ -467,7 +514,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     //设置当前歌曲状态
-    public void setCurrentSong(List<MusicInfo> MusicList, int position) {
+    private void setCurrentSong(List<MusicInfo> MusicList, int position) {
         MusicInfo music = MusicList.get(position);
         CurrentSong = music;
         MusicTime = 0;
@@ -509,7 +556,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     //初始化各个组件
-    protected void init() {
+    private void init() {
         CurrentSongTitle = (TextView) findViewById(R.id.CurrentSongTitle);
         CurrentSongTime = (TextView) findViewById(R.id.CurrentSongTime);
         CurrentSongPosition = (TextView) findViewById(R.id.CurrentSongPosition);
@@ -518,14 +565,16 @@ public class MainActivity extends AppCompatActivity {
         PlaySong = (Button) findViewById(R.id.PlaySong);
         PreviousSong = (Button) findViewById(R.id.PreviousSong);
         NextSong = (Button) findViewById(R.id.NextSong);
-        MusicItem = (ViewGroup)findViewById(R.id.MusicItem);
-        lrcShowViewMain = (LrcView)findViewById(R.id.lrcShowViewMain);
+        MusicItem = (ViewGroup) findViewById(R.id.MusicItem);
+        lrcShowViewMain = (LrcView) findViewById(R.id.lrcShowViewMain);
         MusiclistView = (ListView) findViewById(R.id.MusicList);
         cr = getContentResolver();
+
+        audioManager = (AudioManager) getSystemService(Service.AUDIO_SERVICE);
     }
 
 
-    public void back2Main() {
+    private void back2Main() {
         int position;
         Object[] Current = new DBUtil().getCurrentSong();
         Bundle bundle = getIntent().getExtras();
@@ -538,9 +587,9 @@ public class MainActivity extends AppCompatActivity {
             MusicTime = CurrentSong.getMusicTime();
             String time = MusicTime / 60000 + ":" + (MusicTime % 60000) / 1000;
             CurrentSongTime.setText(time);
-            if(isPause){
+            if (isPause) {
                 PlaySong.setBackgroundResource(R.drawable.play);
-            }else{
+            } else {
                 PlaySong.setBackgroundResource(R.drawable.pause);
                 if (isregisterReceiver)
                     unregisterReceiver(rec);
@@ -555,11 +604,9 @@ public class MainActivity extends AppCompatActivity {
             }
 
 
-
-
             MusicInfo music = MusicList.get(position);
             intent.putExtra("url", music.getMusicPath());
-            intent.putExtra("music",music);
+            intent.putExtra("music", music);
             intent.putExtra("MSG", APPMessage.LrcMsg.showLrc);
             startService(intent);
 
@@ -574,7 +621,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             } else {
                 if (MusicList != null && MusicList.size() > 0)
-                setCurrentSong(MusicList, 0);
+                    setCurrentSong(MusicList, 0);
             }
             PlaySong.setBackgroundResource(R.drawable.play);
             isFirst = true;
@@ -587,13 +634,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     //广播的Filter
-    IntentFilter filter = new IntentFilter();
-    BroadcastReceive rec = new BroadcastReceive();
-
+    private final IntentFilter filter = new IntentFilter();
+    private final BroadcastReceive rec = new BroadcastReceive();
 
 
     //注册各个组件的监听器
-    protected void setLisnter() {
+    private void setLisnter() {
         PlayState.setOnClickListener(new PlayButtonOnClick());
         PlaySong.setOnClickListener(new PlayButtonOnClick());
         PreviousSong.setOnClickListener(new PlayButtonOnClick());
@@ -605,14 +651,14 @@ public class MainActivity extends AppCompatActivity {
         MusicItem.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (showLrc){
+                if (showLrc) {
                     MusiclistView.setVisibility(View.VISIBLE);
                     lrcShowViewMain.setVisibility(View.GONE);
-                    showLrc=false;
-                }else {
+                    showLrc = false;
+                } else {
                     MusiclistView.setVisibility(View.GONE);
                     lrcShowViewMain.setVisibility(View.VISIBLE);
-                    showLrc=true;
+                    showLrc = true;
                 }
             }
         });

@@ -5,7 +5,9 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 
 import android.content.ContentResolver;
@@ -25,10 +27,10 @@ import org.json.JSONObject;
 
 public class MusicAppUtil {
 
-    public static final API api = new API();
+    private static final API api = new API();
 
     //内存卡的路径
-    public static String sDir = null;
+    private static String sDir = null;
 
     /**
      * 用于从数据库中查询歌曲的信息，保存在List当中
@@ -53,7 +55,7 @@ public class MusicAppUtil {
      */
 
     public static List<MusicInfo> getMusicListFromSD(ContentResolver cr) {
-        List<MusicInfo> MusicList = new ArrayList<MusicInfo>();
+        List<MusicInfo> MusicList = new ArrayList<>();
         Cursor cursor = cr.query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
                 null, null, null, MediaStore.Audio.Media.DEFAULT_SORT_ORDER);
         MusicInfo music;
@@ -84,7 +86,7 @@ public class MusicAppUtil {
      * @return List
      */
     public static List<MusicInfo> getMusicListFromNet(String key) {
-        List<MusicInfo> MusicList = new ArrayList<MusicInfo>();
+        List<MusicInfo> MusicList = new ArrayList<>();
         JSONArray songs;
         JSONObject result;
         JSONObject msg;
@@ -118,17 +120,18 @@ public class MusicAppUtil {
     *
     *@return boolean
     * */
-    public static boolean downloadFile(String url,String title){
+    public static boolean downloadFile(String url, String title) {
         boolean flag;
         String sdcard = MusicAppUtil.checkFileAndFolder();
         String prefix = null;
-        if (url!=null){
-            prefix= url.substring(url.lastIndexOf(".")+1);
+        if (url != null) {
+            prefix = url.substring(url.lastIndexOf(".") + 1);
         }
         try {
-            flag = api.DownLoad(url,title+"."+prefix,sdcard+"song/");
+            api.DownLoad(url, title + "." + prefix, sdcard + "song/");
+            flag = true;
         } catch (IOException e) {
-            Log.e("Exception",e.getMessage());
+            Log.e("Exception", e.getMessage());
             flag = false;
         }
         return flag;
@@ -140,13 +143,14 @@ public class MusicAppUtil {
     *
     *@return boolean
     * */
-    public static boolean downloadLrcFile(MusicInfo music){
+    public static boolean downloadLrcFile(MusicInfo music) {
         boolean flag;
         String sdcard = MusicAppUtil.checkFileAndFolder();
         try {
-            flag = api.DownLoadLrc(String.valueOf(music.getMusicID()),music.getMusicTitle(),sdcard+"lyric/");
+            api.DownLoadLrc(String.valueOf(music.getMusicID()), music.getMusicTitle(), sdcard + "lyric/");
+            flag = true;
         } catch (Exception e) {
-            Log.e("Exception",e.getMessage());
+            Log.e("Exception", e.getMessage());
             flag = false;
         }
         return flag;
@@ -157,7 +161,7 @@ public class MusicAppUtil {
     * 把歌曲的json对象转换成MusicInfo对象
     *
     * */
-    public static MusicInfo MusicJSON2Object(JSONObject song) {
+    private static MusicInfo MusicJSON2Object(JSONObject song) {
         MusicInfo musicInfo = new MusicInfo();
         try {
             musicInfo.setMusicID(song.getLong("id"));
@@ -303,4 +307,18 @@ public class MusicAppUtil {
         return sDir;
     }
 
+
+    //扫描文件夹下所有文件
+    public static Set showAllFiles(File dir) {
+        Set<String> File_Set = new HashSet<>();
+        File[] files = dir.listFiles();
+        for (File f : files) {
+            if (f.isDirectory()) {
+                File_Set.addAll(showAllFiles(f));
+            } else {
+                File_Set.add(f.getAbsolutePath());
+            }
+        }
+        return File_Set;
+    }
 }
