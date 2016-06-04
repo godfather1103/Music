@@ -17,7 +17,7 @@
         android:layout_alignParentLeft="true"
         android:layout_alignParentTop="true"
 
-        android:textColor="#000000" />
+        android:textColor="#FFFFFF" />
 
     <TextView
         android:id="@+id/Singer"
@@ -26,7 +26,7 @@
         android:layout_alignLeft="@+id/SongTitle"
         android:layout_below="@+id/SongTitle"
 
-        android:textColor="#000000" />
+        android:textColor="#FFFFFF" />
 
     <TextView
         android:id="@+id/SongTime"
@@ -35,7 +35,7 @@
         android:layout_above="@+id/Singer"
         android:layout_alignParentRight="true"
 
-        android:textColor="#000000" />
+        android:textColor="#FFFFFF" />
 
     <!--    <Button
             android:id="@+id/download"
