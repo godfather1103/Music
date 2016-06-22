@@ -1,4 +1,4 @@
-package com.demo.hwq.util;
+package com.demo.ccb.util;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -18,8 +18,8 @@ import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Log;
 
-import com.demo.hwq.constant.APPMessage;
-import com.demo.hwq.vo.MusicInfo;
+import com.demo.ccb.constant.APPMessage;
+import com.demo.ccb.vo.MusicInfo;
 
 import org.json.JSONArray;
 import org.json.JSONException;

@@ -7,7 +7,7 @@ import android.graphics.Paint;
 import android.graphics.Typeface;
 import android.util.AttributeSet;
 
-import com.demo.hwq.vo.LrcContent;
+import com.demo.ccb.vo.LrcContent;
 
 import java.util.ArrayList;
 import java.util.List;

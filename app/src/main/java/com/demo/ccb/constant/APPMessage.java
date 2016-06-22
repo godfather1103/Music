@@ -1,4 +1,4 @@
-package com.demo.hwq.constant;
+package com.demo.ccb.constant;
 
 import android.os.Environment;
 

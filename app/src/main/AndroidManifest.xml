@@ -17,7 +17,7 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <service android:name="com.demo.hwq.service.PlayService" />
+        <service android:name="com.demo.ccb.service.PlayService" />
 
         <activity
             android:name=".MainActivity"

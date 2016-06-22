@@ -1,16 +1,15 @@
-package com.demo.hwq.util;
+package com.demo.ccb.util;
 
 import android.util.Log;
 
-import com.demo.hwq.constant.APPMessage;
-import com.demo.hwq.vo.LrcContent;
+import com.demo.ccb.constant.APPMessage;
+import com.demo.ccb.vo.LrcContent;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;

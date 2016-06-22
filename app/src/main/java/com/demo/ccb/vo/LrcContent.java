@@ -1,4 +1,4 @@
-package com.demo.hwq.vo;
+package com.demo.ccb.vo;
 
 /**
  * Created by godfa on 2016/6/3.

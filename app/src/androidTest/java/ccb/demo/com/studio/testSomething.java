@@ -3,14 +3,8 @@ package ccb.demo.com.studio;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
-import com.demo.hwq.util.API;
-import com.demo.hwq.util.DBUtil;
-import com.demo.hwq.util.MusicAppUtil;
-import com.demo.hwq.vo.MusicInfo;
-
-import junit.framework.Assert;
-
-import org.junit.Test;
+import com.demo.ccb.util.API;
+import com.demo.ccb.util.MusicAppUtil;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -19,7 +13,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -85,7 +78,6 @@ public class testSomething extends AndroidTestCase {
             bos.close();
     }
 
-    @Test
     public void testScanFile() {
         String sdir = MusicAppUtil.checkFileAndFolder();
         Log.i("单元测试Log", sdir);

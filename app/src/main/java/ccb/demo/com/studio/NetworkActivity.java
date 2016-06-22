@@ -18,7 +18,6 @@ import android.os.ParcelFileDescriptor;
 import android.os.Parcelable;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -33,11 +32,11 @@ import android.widget.SimpleAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.demo.hwq.constant.APPMessage;
-import com.demo.hwq.service.PlayService;
-import com.demo.hwq.util.DBUtil;
-import com.demo.hwq.util.MusicAppUtil;
-import com.demo.hwq.vo.MusicInfo;
+import com.demo.ccb.constant.APPMessage;
+import com.demo.ccb.service.PlayService;
+import com.demo.ccb.util.DBUtil;
+import com.demo.ccb.util.MusicAppUtil;
+import com.demo.ccb.vo.MusicInfo;
 
 import java.io.File;
 import java.io.FileDescriptor;

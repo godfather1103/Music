@@ -1,4 +1,4 @@
-package com.demo.hwq.util;
+package com.demo.ccb.util;
 
 import android.util.Log;
 

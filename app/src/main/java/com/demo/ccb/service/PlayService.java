@@ -1,4 +1,4 @@
-package com.demo.hwq.service;
+package com.demo.ccb.service;
 
 import android.app.Service;
 import android.content.Intent;
@@ -13,11 +13,11 @@ import android.media.MediaPlayer.OnCompletionListener;
 import android.util.Log;
 import android.view.animation.AnimationUtils;
 
-import com.demo.hwq.constant.APPMessage;
-import com.demo.hwq.util.LrcUtil;
-import com.demo.hwq.util.MusicAppUtil;
-import com.demo.hwq.vo.LrcContent;
-import com.demo.hwq.vo.MusicInfo;
+import com.demo.ccb.constant.APPMessage;
+import com.demo.ccb.util.LrcUtil;
+import com.demo.ccb.util.MusicAppUtil;
+import com.demo.ccb.vo.LrcContent;
+import com.demo.ccb.vo.MusicInfo;
 
 import java.util.ArrayList;
 import java.util.List;
